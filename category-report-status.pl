@@ -32,3 +32,29 @@ foreach (@{$articles}) {
 	print "$_->{title}\n";
 }
 
+
+
+# Length of page
+sub get_length {
+ 
+	my $site = shift;
+	my $entry = shift;
+	
+	if ( defined( $sites{$site} ) ) {
+		my $url = $sites{$site}."/w/api.php?action=query&titles=".uri_escape_utf8($entry)."&prop=info&format=json&redirects";
+		
+		my $object = from_json(get($url));
+		if ( $object ) {
+			if ( $object->{"query"}->{"pages"}->{"-1"} ) {
+				return $site.":".0;
+			}
+			foreach my $page ( keys %{$object->{"query"}->{"pages"}} ){
+				return $site.":".$object->{"query"}->{"pages"}->{$page}->{"length"};
+			}
+		} else {
+			return $site.":".-1;
+		}
+	} else {
+		return $site.":".-1;
+	}
+} 
