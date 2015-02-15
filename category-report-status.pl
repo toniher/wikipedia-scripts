@@ -67,6 +67,7 @@ sub proceed_category {
 		print "COUNT: ", get_pagecount( $_->{title} );
 		print Dumper( get_interwiki( $_->{title}, $targetlang ) );
 		# Detect Category, proceed.
+		sleep(1);
 	}
 	
 	foreach (@{$categories}) {
@@ -107,8 +108,8 @@ sub get_length {
 sub get_pagecount {
  
 	my $entry = shift;
+	my $lang = shift // "en";
 	my $date = "201501"; # TODO: Generate from current date
-	my $lang = "en";
 	
 	# TODO: Exception handling URL
 	my $url = "http://stats.grok.se/json/$lang/$date/".uri_escape_utf8($entry);
@@ -129,8 +130,8 @@ sub get_pagecount {
 sub get_interwiki {
 	
 	my $entry = shift;
-	my $target = shift;
-	my $lang = "en";
+	my $targets = shift;
+	my $lang = shift // "en";
 	
 	my $outcome = {};
 	
@@ -139,16 +140,35 @@ sub get_interwiki {
 	# TODO: Exception handling URL
 	my %listiw = &get_iw( from_json(get($wikidata_url)) );
 	my ( @listiw ) = keys %listiw;
-
-	print Dumper( $listiw{"cawiki"} );
-	$outcome->{"target"} = ();
 	
-	# Remove wiki from lang names
-	for (@listiw) {
-		s/wiki//;
+	if ( $#listiw > 0 ) { # We assume baselang there
+
+		$outcome->{"target"} = ();
+	
+		
+		foreach my $targetlang ( @{$targets} ) {
+			
+			my $key = $targetlang."wiki";
+			
+			if ( $listiw{ $key } ) {
+				
+				my $thash = {};
+				$thash->{"title"} = $listiw{ $key }->{"title"};
+				
+				$outcome->{"target"}->{$targetlang} = $thash;
+			}
+			
+		}
+	
+		
+		# Remove wiki from lang names
+		for (@listiw) {
+			s/wiki//;
+		}
+	
+		$outcome->{"list"} = join(",", sort @listiw);
 	}
 	
-	$outcome->{"list"} = join(",", sort @listiw);
 
 	return $outcome;
 	
