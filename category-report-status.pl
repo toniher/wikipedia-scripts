@@ -16,20 +16,25 @@ binmode STDOUT, ":utf8";
 my $category = "Category:Bioinformatics";
 my $depth = 1; # Maximum depth of subcategories
 my @exclude = ();
+my $baselang = "en";
+my @targetlang = ( "ca" );
 
 # Language
+
+my $articles = {};
 
 my $mw = MediaWiki::API->new();
 # URL
 $mw->{config}->{api_url} = 'https://en.wikipedia.org/w/api.php';
 
-proceed_category( $category, $mw, 0 );
+proceed_category( $category, $mw, \@targetlang, 0 );
 
 
 sub proceed_category {
 
 	my $cat = shift;
 	my $mw = shift;
+	my $targetlang = shift;
 	my $step = shift;
 
 	print $step, "\n";
@@ -57,8 +62,10 @@ sub proceed_category {
 	# and print the article titles
 	foreach (@{$articles}) {
 		print "$_->{title}\n";
-		#get_length( $_->{title}, $mw );
+		print "LENGTH: ", get_length( $_->{title}, $mw );
 		print "\n";
+		print "COUNT: ", get_pagecount( $_->{title} );
+		print Dumper( get_interwiki( $_->{title}, $targetlang ) );
 		# Detect Category, proceed.
 	}
 	
@@ -72,25 +79,109 @@ sub proceed_category {
 # Length of page
 sub get_length {
  
- 	# TODO: Change to MediaWiki::API
-	my $site = shift;
 	my $entry = shift;
+	my $mw = shift;
 	
-	if ( defined( $sites{$site} ) ) {
-		my $url = $sites{$site}."/w/api.php?action=query&titles=".uri_escape_utf8($entry)."&prop=info&format=json&redirects";
-		
-		my $object = from_json(get($url));
-		if ( $object ) {
-			if ( $object->{"query"}->{"pages"}->{"-1"} ) {
-				return $site.":".0;
-			}
-			foreach my $page ( keys %{$object->{"query"}->{"pages"}} ){
-				return $site.":".$object->{"query"}->{"pages"}->{$page}->{"length"};
-			}
+	my $articles = $mw->api ( {
+		action => 'query',
+		titles => $entry,
+		prop => 'info',
+		redirects => '' } )
+	|| die $mw->{error}->{code} . ': ' . $mw->{error}->{details};
+
+	if ( $articles ) {
+		if ( $articles->{"query"}->{"pages"}->{"-1"} ) {
+			return 0;
 		} else {
-			return $site.":".-1;
+			foreach my $page ( keys %{$articles->{"query"}->{"pages"} } ){
+				return $articles->{"query"}->{"pages"}->{$page}->{"length"};
+			}	
+			
 		}
 	} else {
-		return $site.":".-1;
+		return 0;
 	}
+} 
+
+# Length of page
+sub get_pagecount {
+ 
+	my $entry = shift;
+	my $date = "201501"; # TODO: Generate from current date
+	my $lang = "en";
+	
+	# TODO: Exception handling URL
+	my $url = "http://stats.grok.se/json/$lang/$date/".uri_escape_utf8($entry);
+
+	my $jsonobj = from_json(get($url)); 
+	
+	if ( $jsonobj ) {
+	
+		my $count_total = avg_values ( $jsonobj->{"daily_views"} );
+		return $count_total;
+	} else {
+		return -1;
+	}
+	
+
+}
+
+sub get_interwiki {
+	
+	my $entry = shift;
+	my $target = shift;
+	my $lang = "en";
+	
+	my $outcome = {};
+	
+	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".uri_escape_utf8($entry)."&languages=".$lang."&format=json";
+	
+	# TODO: Exception handling URL
+	my %listiw = &get_iw( from_json(get($wikidata_url)) );
+	my ( @listiw ) = keys %listiw;
+
+	print Dumper( $listiw{"cawiki"} );
+	$outcome->{"target"} = ();
+	
+	# Remove wiki from lang names
+	for (@listiw) {
+		s/wiki//;
+	}
+	
+	$outcome->{"list"} = join(",", sort @listiw);
+
+	return $outcome;
+	
+}
+
+
+sub avg_values {
+	
+	my $hash = shift;
+	my $num = 0;
+	my $sum = 0;
+	
+	foreach my $key ( keys %{$hash} ) {
+		my $val = $hash->{$key};
+		$sum = $sum + ( $val );
+		$num++;
+	}
+	
+	if ( $num > 0 ) {
+		return $sum / $num ;
+	} else {
+		return -1;
+	}
+	
+}
+
+# Return interwiki list
+sub get_iw {
+ 
+	my ( @iw ) = ();
+	my $object = shift;
+	foreach my $page ( keys %{$object->{"entities"}} ){
+		return %{$object->{"entities"}->{$page}->{"sitelinks"}};
+	}
+	return @iw;
 } 
