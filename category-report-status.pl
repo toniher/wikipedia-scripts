@@ -23,20 +23,29 @@ my @targetlang = ( "ca" );
 
 my $articles = {};
 
-my $mw = MediaWiki::API->new();
-# URL
-$mw->{config}->{api_url} = 'https://en.wikipedia.org/w/api.php';
+# Container for playing with Wikipedias
+my $mwcontainer;
 
-proceed_category( $category, $mw, \@targetlang, 0 );
+$mwcontainer->{$baselang} = MediaWiki::API->new();
+$mwcontainer->{$baselang}->{config}->{api_url} = 'https://'.$baselang.'.wikipedia.org/w/api.php';
+
+foreach my $tlang ( @targetlang ) {
+	$mwcontainer->{$tlang} = MediaWiki::API->new();
+	$mwcontainer->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
+}
+
+proceed_category( $category, $mwcontainer, \@targetlang, 0 );
 
 
 sub proceed_category {
 
 	my $cat = shift;
-	my $mw = shift;
+	my $mwcontainer = shift;
 	my $targetlang = shift;
 	my $step = shift;
 
+	my $mw = $mwcontainer->{ $baselang };
+	
 	print $step, "\n";
 	
 	if ( $step > $depth ) {
