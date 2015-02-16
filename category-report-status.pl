@@ -6,21 +6,22 @@ use JSON qw(from_json);
 use URI::Escape;
 use Data::Dumper;
 use Math::Round qw/round/;
+use Config::JSON;
 use utf8; 
 
 
 use 5.010;
 binmode STDOUT, ":utf8";
 
-#TODO: Load stuff via JSON
-my $category = "Category:Bioinformatics";
-my $depth = 1; # Maximum depth of subcategories
-my @exclude = ();
-my $baselang = "en";
-my @targetlang = ( "ca" );
+my $config = Config::JSON->new("category-report-status.json");
 
+my $category = $config->get("category") // "Category:Bioinformatics";
+my $depth = $config->get("depth") // 1; # Maximum depth of subcategories
+my $exclude = $config->get("exclude") // ("Category:Bioinformatics stubs");
+my $baselang = $config->get("baselang") // "en";
+my $targetlang = $config->get("targetlang") // ( "ca" );
 
-my $list = {};
+my $temp = {};
 
 # Container for playing with Wikipedias
 my $mwcontainer;
@@ -28,7 +29,7 @@ my $mwcontainer;
 $mwcontainer->{"base"}->{$baselang} = MediaWiki::API->new();
 $mwcontainer->{"base"}->{$baselang}->{config}->{api_url} = 'https://'.$baselang.'.wikipedia.org/w/api.php';
 # Then targets
-foreach my $tlang ( @targetlang ) {
+foreach my $tlang ( @{$targetlang} ) {
 	$mwcontainer->{"target"}->{$tlang} = MediaWiki::API->new();
 	$mwcontainer->{"target"}->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
 }
@@ -44,7 +45,7 @@ sub proceed_category {
 
 	my $mw = $mwcontainer->{"base"}->{ $baselang };
 	
-	print $step, "\n";
+	print STDERR $step, "\n";
 	
 	if ( $step > $depth ) {
 		return;
@@ -72,9 +73,15 @@ sub proceed_category {
 		
 			my $title = $_->{title};
 			
-			unless ( $list->{$title} ) {
+			unless ( $temp->{$title} ) {
 		
+				if ( inArray( $title, $exclude ) )  {
+					next;
+				}
+
+				my $list = {};
 				$list->{$title} = {};
+				$temp->{$title} = 1;
 				
 				$list->{$title}->{"length"} = get_length( $title, $mw );
 				$list->{$title}->{"count"} = get_pagecount( $title );
@@ -87,19 +94,39 @@ sub proceed_category {
 						$list->{$title}->{"target"}.= $key. "\t". "TITLE: ". $out->{"target"}->{$key}->{"title"}. "\t". "LENGTH: ". $out->{"target"}->{$key}->{"length"}. "\n";
 					}
 				}
-				print Dumper( $list );
+
+				print "|-", "\n";
+				print "| ", $title, "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"list"}, "||", $list->{$title}->{"target"}, "\n";
 			}
 		}
 		sleep(2);
 	}
 	
 	foreach (@{$categories}) {
-		print "CAT: ".$_->{title}."\n";
+
+		if ( inArray( $_->{title}, $exclude ) )  {
+			next;
+		}
+
+		print STDERR "CAT: ".$_->{title}."\n";
 		proceed_category( $_->{title}, $mw, $step + 1 );
 		sleep(2);
 	}
 }
 
+sub inArray {
+
+	my $elem = shift;
+	my $array = shift;
+
+	my %params = map { $_ => 1 } @{$array};
+	if( exists( $params{$elem} ) ) {
+		return 1;
+	} else {
+		return 0;
+	}
+
+}
 
 
 # Length of page
