@@ -25,26 +25,25 @@ my $articles = {};
 
 # Container for playing with Wikipedias
 my $mwcontainer;
-
-$mwcontainer->{$baselang} = MediaWiki::API->new();
-$mwcontainer->{$baselang}->{config}->{api_url} = 'https://'.$baselang.'.wikipedia.org/w/api.php';
-
+# First base
+$mwcontainer->{"base"}->{$baselang} = MediaWiki::API->new();
+$mwcontainer->{"base"}->{$baselang}->{config}->{api_url} = 'https://'.$baselang.'.wikipedia.org/w/api.php';
+# Then targets
 foreach my $tlang ( @targetlang ) {
-	$mwcontainer->{$tlang} = MediaWiki::API->new();
-	$mwcontainer->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
+	$mwcontainer->{"target"}->{$tlang} = MediaWiki::API->new();
+	$mwcontainer->{"target"}->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
 }
 
-proceed_category( $category, $mwcontainer, \@targetlang, 0 );
+proceed_category( $category, $mwcontainer, 0 );
 
 
 sub proceed_category {
 
 	my $cat = shift;
 	my $mwcontainer = shift;
-	my $targetlang = shift;
 	my $step = shift;
 
-	my $mw = $mwcontainer->{ $baselang };
+	my $mw = $mwcontainer->{"base"}->{ $baselang };
 	
 	print $step, "\n";
 	
@@ -74,7 +73,7 @@ sub proceed_category {
 		print "LENGTH: ", get_length( $_->{title}, $mw );
 		print "\n";
 		print "COUNT: ", get_pagecount( $_->{title} );
-		print Dumper( get_interwiki( $_->{title}, $targetlang ) );
+		print Dumper( get_interwiki( $_->{title}, $mwcontainer ) );
 		# Detect Category, proceed.
 		sleep(1);
 	}
@@ -139,7 +138,7 @@ sub get_pagecount {
 sub get_interwiki {
 	
 	my $entry = shift;
-	my $targets = shift;
+	my $mwcontainer = shift;
 	my $lang = shift // "en";
 	
 	my $outcome = {};
@@ -154,6 +153,7 @@ sub get_interwiki {
 
 		$outcome->{"target"} = ();
 	
+		my $targets = keys ( %{$mwcontainer->{"target"}} );
 		
 		foreach my $targetlang ( @{$targets} ) {
 			
