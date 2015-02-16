@@ -70,10 +70,17 @@ sub proceed_category {
 	# and print the article titles
 	foreach (@{$articles}) {
 		print "$_->{title}\n";
-		print "LENGTH: ", get_length( $_->{title}, $mw );
-		print "\n";
-		print "COUNT: ", get_pagecount( $_->{title} );
-		print Dumper( get_interwiki( $_->{title}, $mwcontainer ) );
+		print "LENGTH: ", get_length( $_->{title}, $mw ), "\n";
+		print "COUNT: ", get_pagecount( $_->{title} ), "\n";
+		my $out = get_interwiki( $_->{title}, $mwcontainer ) ;
+		if ( $out->{"list"} ) {
+			print "LIST: ", $out->{"list"} , "\n";
+		}
+		if ( $out->{"target"} ) {
+			foreach my $key ( keys %{ $out->{"target"} } ) {
+				print $key, "\t", "TITLE: ",  $out->{"target"}->{$key}->{"title"}, "\t", $out->{"target"}->{$key}->{"length"}, "\n";
+			}
+		}
 		# Detect Category, proceed.
 		sleep(1);
 	}
@@ -152,17 +159,18 @@ sub get_interwiki {
 	if ( $#listiw > 0 ) { # We assume baselang there
 
 		$outcome->{"target"} = ();
-	
-		my $targets = keys ( %{$mwcontainer->{"target"}} );
+
+		my @targets = keys %{$mwcontainer->{"target"}};
 		
-		foreach my $targetlang ( @{$targets} ) {
-			
+		foreach my $targetlang ( @targets ) {
+
 			my $key = $targetlang."wiki";
-			
+
 			if ( $listiw{ $key } ) {
 				
 				my $thash = {};
 				$thash->{"title"} = $listiw{ $key }->{"title"};
+				$thash->{"length"} = get_length( $thash->{"title"}, $mwcontainer->{"target"}->{$targetlang} );
 				
 				$outcome->{"target"}->{$targetlang} = $thash;
 			}
