@@ -111,7 +111,7 @@ sub proceed_category {
 				print "| ", $title, "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"present"}, "||", $list->{$title}->{"target"}, "\n";
 			}
 		}
-		sleep(int(sleep));
+		sleep(int($sleep));
 	}
 	
 	foreach (@{$categories}) {
