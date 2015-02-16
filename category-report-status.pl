@@ -34,6 +34,10 @@ foreach my $tlang ( @{$targetlang} ) {
 	$mwcontainer->{"target"}->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
 }
 
+# Header of table
+print "{| class='wikitable sortable'\n";
+print "! Title || Length || Count || Interwiki || Present || Target";
+
 proceed_category( $category, $mwcontainer, 0 );
 
 
@@ -120,6 +124,9 @@ sub proceed_category {
 		sleep(2);
 	}
 }
+
+#End of table
+print "|}\n";
 
 sub inArray {
 
