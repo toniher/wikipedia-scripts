@@ -20,6 +20,7 @@ my $depth = $config->get("depth") // 1; # Maximum depth of subcategories
 my $exclude = $config->get("exclude") // ("Category:Bioinformatics stubs");
 my $baselang = $config->get("baselang") // "en";
 my $targetlang = $config->get("targetlang") // ( "ca" );
+my $sleep = $config->get("sleep") // 5;
 
 my $temp = {};
 
@@ -110,7 +111,7 @@ sub proceed_category {
 				print "| ", $title, "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"present"}, "||", $list->{$title}->{"target"}, "\n";
 			}
 		}
-		sleep(2);
+		sleep(int(sleep));
 	}
 	
 	foreach (@{$categories}) {
@@ -121,7 +122,7 @@ sub proceed_category {
 
 		print STDERR "CAT: ".$_->{title}."\n";
 		proceed_category( $_->{title}, $mwcontainer, $step + 1 );
-		sleep(2);
+		sleep(int($sleep));
 	}
 }
 
@@ -177,10 +178,9 @@ sub get_pagecount {
 	my $lang = shift // "en";
 	my $date = "201501"; # TODO: Generate from current date
 	
-	# TODO: Exception handling URL
 	my $url = "http://stats.grok.se/json/$lang/$date/".$entry;
 
-	my $jsonobj = from_json(get($url)); 
+	my $jsonobj = from_json(full_get($url)); 
 	
 	if ( $jsonobj ) {
 	
@@ -204,7 +204,7 @@ sub get_interwiki {
 	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".$entry."&languages=".$lang."&format=json";
 	
 	# TODO: Exception handling URL
-	my %listiw = &get_iw( from_json(get($wikidata_url)) );
+	my %listiw = &get_iw( from_json(full_get($wikidata_url)) );
 	my ( @listiw ) = keys %listiw;
 	
 	if ( $#listiw > 0 ) { # We assume baselang there
@@ -283,3 +283,22 @@ sub get_iw {
 	}
 	return @iw;
 } 
+
+
+sub full_get {
+
+	my $url = shift;
+	my $retry = shift // 0;
+	
+	if ( $retry > 5 ) {
+		die "too many retries";
+	}
+	
+	$content = get($url);
+	$retry++;
+	full_get($url, $retry) unless defined $content;
+	
+	return $content;
+	
+}
+
