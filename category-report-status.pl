@@ -79,19 +79,23 @@ sub proceed_category {
 					next;
 				}
 
+				print STDERR "** ", $title, "\n";
+
 				my $list = {};
 				$list->{$title} = {};
 				$temp->{$title} = 1;
 				
 				$list->{$title}->{"length"} = get_length( $title, $mw );
+
 				$list->{$title}->{"count"} = get_pagecount( $title );
+
 				my $out = get_interwiki( $title, $mwcontainer ) ;
 				if ( $out->{"list"} ) {
 					$list->{$title}->{"list"} = $out->{"list"};
 				}
 				if ( $out->{"target"} ) {
 					foreach my $key ( keys %{ $out->{"target"} } ) {
-						$list->{$title}->{"target"}.= $key. "\t". "TITLE: ". $out->{"target"}->{$key}->{"title"}. "\t". "LENGTH: ". $out->{"target"}->{$key}->{"length"}. "\n";
+						$list->{$title}->{"target"}.= "\t". $key. "\t". "TITLE: ". $out->{"target"}->{$key}->{"title"}. "\t". "LENGTH: ". $out->{"target"}->{$key}->{"length"};
 					}
 				}
 
@@ -109,7 +113,7 @@ sub proceed_category {
 		}
 
 		print STDERR "CAT: ".$_->{title}."\n";
-		proceed_category( $_->{title}, $mw, $step + 1 );
+		proceed_category( $_->{title}, $mwcontainer, $step + 1 );
 		sleep(2);
 	}
 }
@@ -164,7 +168,7 @@ sub get_pagecount {
 	my $date = "201501"; # TODO: Generate from current date
 	
 	# TODO: Exception handling URL
-	my $url = "http://stats.grok.se/json/$lang/$date/".uri_escape_utf8($entry);
+	my $url = "http://stats.grok.se/json/$lang/$date/".$entry;
 
 	my $jsonobj = from_json(get($url)); 
 	
@@ -187,7 +191,7 @@ sub get_interwiki {
 	
 	my $outcome = {};
 	
-	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".uri_escape_utf8($entry)."&languages=".$lang."&format=json";
+	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".$entry."&languages=".$lang."&format=json";
 	
 	# TODO: Exception handling URL
 	my %listiw = &get_iw( from_json(get($wikidata_url)) );
