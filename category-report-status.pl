@@ -90,8 +90,11 @@ sub proceed_category {
 				$list->{$title}->{"count"} = get_pagecount( $title );
 
 				my $out = get_interwiki( $title, $mwcontainer ) ;
-				if ( $out->{"list"} ) {
-					$list->{$title}->{"list"} = $out->{"list"};
+				if ( $out->{"listcount"} ) {
+					$list->{$title}->{"listcount"} = $out->{"listcount"};
+				}
+				if ( $out->{"present"} ) {
+					$list->{$title}->{"present"} = $out->{"present"};
 				}
 				if ( $out->{"target"} ) {
 					foreach my $key ( keys %{ $out->{"target"} } ) {
@@ -100,7 +103,7 @@ sub proceed_category {
 				}
 
 				print "|-", "\n";
-				print "| ", $title, "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"list"}, "||", $list->{$title}->{"target"}, "\n";
+				print "| ", $title, "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"present"}, "||", $list->{$title}->{"target"}, "\n";
 			}
 		}
 		sleep(2);
@@ -223,8 +226,18 @@ sub get_interwiki {
 		for (@listiw) {
 			s/wiki//;
 		}
-	
+		
+		$outcome->{"listcount"} = $#listiw + 1;
 		$outcome->{"list"} = join(",", sort @listiw);
+
+		$outcome->{"present"} = 0;
+		
+		foreach my $target ( @targets ) {
+			if ( inArray( $target, \@listiw ) ) {
+				$outcome->{"present"} = 1;
+			}
+		}
+
 	}
 	
 
