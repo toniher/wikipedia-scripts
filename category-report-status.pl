@@ -5,23 +5,22 @@ use LWP::Simple qw(get);
 use JSON qw(from_json);
 use URI::Escape;
 use Data::Dumper;
+use Math::Round qw/round/;
 use utf8; 
+
 
 use 5.010;
 binmode STDOUT, ":utf8";
 
 #TODO: Load stuff via JSON
-
-# Category
 my $category = "Category:Bioinformatics";
 my $depth = 1; # Maximum depth of subcategories
 my @exclude = ();
 my $baselang = "en";
 my @targetlang = ( "ca" );
 
-# Language
 
-my $articles = {};
+my $list = {};
 
 # Container for playing with Wikipedias
 my $mwcontainer;
@@ -69,28 +68,39 @@ sub proceed_category {
 
 	# and print the article titles
 	foreach (@{$articles}) {
-		print "$_->{title}\n";
-		print "LENGTH: ", get_length( $_->{title}, $mw ), "\n";
-		print "COUNT: ", get_pagecount( $_->{title} ), "\n";
-		my $out = get_interwiki( $_->{title}, $mwcontainer ) ;
-		if ( $out->{"list"} ) {
-			print "LIST: ", $out->{"list"} , "\n";
-		}
-		if ( $out->{"target"} ) {
-			foreach my $key ( keys %{ $out->{"target"} } ) {
-				print $key, "\t", "TITLE: ",  $out->{"target"}->{$key}->{"title"}, "\t", $out->{"target"}->{$key}->{"length"}, "\n";
+		if ( $_->{ns} == 0 ) {
+		
+			my $title = $_->{title};
+			
+			unless ( $list->{$title} ) {
+		
+				$list->{$title} = {};
+				
+				$list->{$title}->{"length"} = get_length( $title, $mw );
+				$list->{$title}->{"count"} = get_pagecount( $title );
+				my $out = get_interwiki( $title, $mwcontainer ) ;
+				if ( $out->{"list"} ) {
+					$list->{$title}->{"list"} = $out->{"list"};
+				}
+				if ( $out->{"target"} ) {
+					foreach my $key ( keys %{ $out->{"target"} } ) {
+						$list->{$title}->{"target"}.= $key. "\t". "TITLE: ". $out->{"target"}->{$key}->{"title"}. "\t". "LENGTH: ". $out->{"target"}->{$key}->{"length"}. "\n";
+					}
+				}
+				print Dumper( $list );
 			}
 		}
-		# Detect Category, proceed.
-		sleep(1);
+		sleep(2);
 	}
 	
 	foreach (@{$categories}) {
 		print "CAT: ".$_->{title}."\n";
 		proceed_category( $_->{title}, $mw, $step + 1 );
-		sleep(1);
+		sleep(2);
 	}
 }
+
+
 
 # Length of page
 sub get_length {
@@ -205,7 +215,7 @@ sub avg_values {
 	}
 	
 	if ( $num > 0 ) {
-		return $sum / $num ;
+		return round( $sum / $num );
 	} else {
 		return -1;
 	}
