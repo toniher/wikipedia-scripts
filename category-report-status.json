@@ -1,0 +1,7 @@
+{
+	"category": "Category:Bioinformatics",
+	"depth": 1,
+	"exclude": [ "Category:Biorepositories‎", "Category:Theoretical biologists", "Category:Phylogenetics" ],
+	"baselang": "en",
+	"targetlang": [ "ca" ]
+}
