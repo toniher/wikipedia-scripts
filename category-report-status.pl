@@ -37,7 +37,7 @@ foreach my $tlang ( @{$targetlang} ) {
 
 # Header of table
 print "{| class='wikitable sortable'\n";
-print "! Title || Length || Count || Interwiki || Present || Target\n";
+print "! Title || Length || Count/day || Interwiki || Target Present || Target Info || Category\n";
 
 proceed_category( $category, $mwcontainer, 0 );
 
@@ -103,12 +103,12 @@ sub proceed_category {
 				}
 				if ( $out->{"target"} ) {
 					foreach my $key ( keys %{ $out->{"target"} } ) {
-						$list->{$title}->{"target"}.= "\t". $key. "\t". "TITLE: ". $out->{"target"}->{$key}->{"title"}. "\t". "LENGTH: ". $out->{"target"}->{$key}->{"length"};
+						$list->{$title}->{"target"}.= "[[:$key:".$out->{"target"}->{$key}->{"title"}."|". $out->{"target"}->{$key}->{"title"}. "]]". " len: ". $out->{"target"}->{$key}->{"length"};
 					}
 				}
 
 				print "|-", "\n";
-				print "| ", $title, "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"present"}, "||", $list->{$title}->{"target"}, "\n";
+				print "| ", "[[:$baselang:$title|".$title."]]", "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"present"}, "||", $list->{$title}->{"target"}, "||", "[[:$baselang:$cat|".$cat."]]\n";
 			}
 		}
 		sleep(int($sleep));
