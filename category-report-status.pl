@@ -37,7 +37,7 @@ foreach my $tlang ( @{$targetlang} ) {
 
 # Header of table
 print "{| class='wikitable sortable'\n";
-print "! Title || Length || Count || Interwiki || Present || Target";
+print "! Title || Length || Count || Interwiki || Present || Target\n";
 
 proceed_category( $category, $mwcontainer, 0 );
 
