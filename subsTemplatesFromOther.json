@@ -1,0 +1,8 @@
+{
+	"from": "Plantilla:Clima",
+	"to": "Plantilla:WeatherBox",
+	"exclude": [ ],
+	"baselang": "en",
+	"targetlang": "ca",
+	"sleep": 3
+}
