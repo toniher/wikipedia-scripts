@@ -1,6 +1,6 @@
 {
 	"from": "Plantilla:Clima",
-	"to": "Plantilla:WeatherBox",
+	"to": "Template:Weather box",
 	"exclude": [ ],
 	"baselang": "en",
 	"targetlang": "ca",

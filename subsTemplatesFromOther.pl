@@ -13,7 +13,7 @@ use utf8;
 use 5.010;
 binmode STDOUT, ":utf8";
 
-my $config = Config::JSON->new("category-report-status.json");
+my $config = Config::JSON->new("subsTemplatesFromOther.json");
 
 my $from = $config->get("from") // "";
 my $to = $config->get("to") // ""; 
@@ -22,7 +22,6 @@ my $baselang = $config->get("baselang") // "en";
 my $targetlang = $config->get("targetlang") // "ca";
 my $sleep = $config->get("sleep") // 5;
 
-my $temp = {};
 
 # Container for playing with Wikipedias
 my $mwcontainer;
@@ -31,7 +30,7 @@ $mwcontainer->{"base"}->{$baselang} = MediaWiki::API->new();
 $mwcontainer->{"base"}->{$baselang}->{config}->{api_url} = 'https://'.$baselang.'.wikipedia.org/w/api.php';
 # Then target
 $mwcontainer->{"target"}->{$targetlang} = MediaWiki::API->new();
-$mwcontainer->{"target"}->{$targetlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
+$mwcontainer->{"target"}->{$targetlang}->{config}->{api_url} = 'https://'.$targetlang.'.wikipedia.org/w/api.php';
 
 
 proceed_template( $mwcontainer, $from, $to, $exclude );
@@ -39,12 +38,51 @@ proceed_template( $mwcontainer, $from, $to, $exclude );
 
 sub proceed_template {
 
+	my $mwcontainer = shift;
+	my $from = shift;
+	my $to = shift;
+	my $exclude = shift;
 
 	# What links here
-	# Iterate
+
+	my $mw = $mwcontainer->{"target"}->{ $targetlang };
 	
-		# Get interwiki
-		# Check if to template
+	# get a list of articles in category
+	my $articles = $mw->list ( {
+		action => 'query',
+		list => 'embeddedin',
+		einamespace => 0,
+		eititle => $from,
+		eilimit => 100
+	 } )
+	|| die $mw->{error}->{code} . ': ' . $mw->{error}->{details};
+		
+	# Iterate
+	foreach (@{$articles}) {
+		if ( $_->{ns} == 0 ) {
+		
+			my $title = $_->{title};
+			
+			if ( $title ) {		
+				if ( inArray( $title, $exclude ) )  {
+					next;
+				}
+				
+				# Get interwiki
+				print $title, "\n";
+				my $basetitle = get_interwiki( $title, $mwcontainer, $targetlang );
+				# Check if to template		
+				
+				if (! empty( $basetitle ) ) {
+					# Get text from original and paste
+					my $cut_text = cut_text( $mwcontainer, $baselang, $basetitle, $to );
+				}
+				
+			}
+		}
+	}
+		
+
 		
 		# Open. Get template
 		
@@ -76,79 +114,23 @@ sub get_interwiki {
 	my $mwcontainer = shift;
 	my $lang = shift // "en";
 	
+	my $basetitle = "";
+	
 	my $outcome = {};
 	
 	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".$entry."&languages=".$lang."&format=json";
 	
 	# TODO: Exception handling URL
 	my %listiw = &get_iw( from_json(full_get($wikidata_url)) );
-	my ( @listiw ) = keys %listiw;
 	
-	if ( $#listiw > 0 ) { # We assume baselang there
+	if ( $listiw{$baselang."wiki"} ) {
+		$basetitle = $listiw{$baselang."wiki"}->{title};
+	}	
 
-		$outcome->{"target"} = ();
-
-		my @targets = keys %{$mwcontainer->{"target"}};
-		
-		foreach my $targetlang ( @targets ) {
-
-			my $key = $targetlang."wiki";
-
-			if ( $listiw{ $key } ) {
-				
-				my $thash = {};
-				$thash->{"title"} = $listiw{ $key }->{"title"};
-				$thash->{"length"} = get_length( $thash->{"title"}, $mwcontainer->{"target"}->{$targetlang} );
-				
-				$outcome->{"target"}->{$targetlang} = $thash;
-			}
-			
-		}
-	
-		
-		# Remove wiki from lang names
-		for (@listiw) {
-			s/wiki//;
-		}
-		
-		$outcome->{"listcount"} = $#listiw + 1;
-		$outcome->{"list"} = join(",", sort @listiw);
-
-		$outcome->{"present"} = 0;
-		
-		foreach my $target ( @targets ) {
-			if ( inArray( $target, \@listiw ) ) {
-				$outcome->{"present"} = 1;
-			}
-		}
-
-	}
-	
-
-	return $outcome;
+	return $basetitle;
 	
 }
 
-
-sub avg_values {
-	
-	my $hash = shift;
-	my $num = 0;
-	my $sum = 0;
-	
-	foreach my $key ( keys %{$hash} ) {
-		my $val = $hash->{$key};
-		$sum = $sum + ( $val );
-		$num++;
-	}
-	
-	if ( $num > 0 ) {
-		return round( $sum / $num );
-	} else {
-		return -1;
-	}
-	
-}
 
 # Return interwiki list
 sub get_iw {
@@ -161,21 +143,29 @@ sub get_iw {
 	return @iw;
 } 
 
+sub cut_text {
+	
+	my $mwcontainer = shift;
+	my $baselang = shift;
+	my $title = shift;
+	my $template = shift;
+	
+	# Process template name
+	my $intemplate = $template;
+	$intemplate =~ s/Template\://;
+	
+	my $mw = $mwcontainer->{"base"}->{ $baselang };
 
-sub full_get {
-
-	my $url = shift;
-	my $retry = shift // 0;
+	my $page = $mw->get_page( { title => $title } );
+	# print page contents
+	my $text = $page->{'*'};
 	
-	if ( $retry > 5 ) {
-		die "too many retries";
-	}
+	my $detect = "({{".$intemplate.".*?}}";
 	
-	$content = get($url);
-	$retry++;
-	full_get($url, $retry) unless defined $content;
+	my ( $cut_text ) = $text =~ /$detect/;
 	
-	return $content;
-	
+	return $cut_text;
 }
+
+
 
