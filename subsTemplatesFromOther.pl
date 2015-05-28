@@ -69,26 +69,30 @@ sub proceed_template {
 				}
 				
 				# Get interwiki
-				print $title, "\n";
 				my $basetitle = get_interwiki( $title, $mwcontainer, $targetlang );
 				# Check if to template		
 				
-				if (! empty( $basetitle ) ) {
+				if ( $basetitle ne '' ) {
 					# Get text from original and paste
 					my $cut_text = cut_text( $mwcontainer, $baselang, $basetitle, $to );
+					#print $cut_text, "\n";
+					
+					my $rm_text = cut_text( $mwcontainer, $targetlang, $title, $from, "target" );
+					#print $rm_text, "\n";
+
+					my $text = $mw->get_page( { title => $title } )->{'*'};
+					$rm_text = quotemeta( $rm_text );
+					$text =~ s/$rm_text/$cut_text/g;
+					
+					print $text;
+					# Modify now page
+					# edit( $mw, $title, $text, "Update Text" );
+
 				}
 				
 			}
 		}
 	}
-		
-
-		
-		# Open. Get template
-		
-		# Cut, paste, save
-		# Log
-
 }
 
 
@@ -149,23 +153,66 @@ sub cut_text {
 	my $baselang = shift;
 	my $title = shift;
 	my $template = shift;
+	my $group = shift // 'base';
+	
+	print STDERR $title, "\n";
 	
 	# Process template name
 	my $intemplate = $template;
-	$intemplate =~ s/Template\://;
 	
-	my $mw = $mwcontainer->{"base"}->{ $baselang };
+	# Language specific - sic
+	$intemplate =~ s/Template\://;
+	$intemplate =~ s/Plantilla\://;
+
+	
+	my $mw = $mwcontainer->{$group}->{ $baselang };
 
 	my $page = $mw->get_page( { title => $title } );
 	# print page contents
 	my $text = $page->{'*'};
 	
-	my $detect = "({{".$intemplate.".*?}}";
+	my $detect = "(\{\{".$intemplate.".*?\}\})";
 	
-	my ( $cut_text ) = $text =~ /$detect/;
+	my ( $cut_text ) = $text =~ /$detect/s;
 	
 	return $cut_text;
 }
 
+sub full_get {
 
+	my $url = shift;
+	my $retry = shift // 0;
+	
+	if ( $retry > 5 ) {
+		die "too many retries";
+	}
+	
+	$content = get($url);
+	$retry++;
+	full_get($url, $retry) unless defined $content;
+	
+	return $content;
+	
+}
+
+sub edit {
+
+	my $mw = shift;
+	my $pagename = shift;
+	my $text = shift;
+	my $summary = shift;
+
+	my $ref = $mw->get_page( { title => $pagename } );
+	unless ( $ref->{missing} ) {
+			my $timestamp = $ref->{timestamp};
+			$mw->edit( {
+			  action => 'edit',
+			  title => $pagename,
+			  basetimestamp => $timestamp, # to avoid edit conflicts
+			  text => $text } )
+			  || die $mw->{error}->{code} . ': ' . $mw->{error}->{details};
+	}
+
+	return 1;
+}
 
