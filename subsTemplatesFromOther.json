@@ -1,8 +1,20 @@
 {
-	"from": "Plantilla:Clima",
+	"from": "Plantilla:Infobox Weather",
 	"to": "Template:Weather box",
 	"exclude": [ ],
 	"baselang": "en",
 	"targetlang": "ca",
-	"sleep": 3
+	"sleep": 3,
+	"mw": {
+		"username": "Catabot",
+		"password": "xxx",
+		"host": "ca.wikipedia.org",
+		"protocol": "https",
+		"path": "w"
+	},
+	"replace": {
+		"Weather box": "WeatherBox",
+		"Weather averages of": "Dades climatològiques",
+		"Metereologic Station": "Estació meteorològica"
+	}
 }

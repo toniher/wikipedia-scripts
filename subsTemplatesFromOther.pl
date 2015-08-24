@@ -13,7 +13,8 @@ use utf8;
 use 5.010;
 binmode STDOUT, ":utf8";
 
-my $config = Config::JSON->new("subsTemplatesFromOther.json");
+my $configfile = shift // "subsTemplatesFromOther.json";
+my $config = Config::JSON->new($configfile);
 
 my $from = $config->get("from") // "";
 my $to = $config->get("to") // ""; 
@@ -22,6 +23,8 @@ my $baselang = $config->get("baselang") // "en";
 my $targetlang = $config->get("targetlang") // "ca";
 my $sleep = $config->get("sleep") // 5;
 
+# Replacements
+my $replacements = $config->get("replace") // {};
 
 # Container for playing with Wikipedias
 my $mwcontainer;
@@ -32,6 +35,14 @@ $mwcontainer->{"base"}->{$baselang}->{config}->{api_url} = 'https://'.$baselang.
 $mwcontainer->{"target"}->{$targetlang} = MediaWiki::API->new();
 $mwcontainer->{"target"}->{$targetlang}->{config}->{api_url} = 'https://'.$targetlang.'.wikipedia.org/w/api.php';
 
+# Username and password.
+my $user = $config->get("mw/username") // "";
+my $pass = $config->get("mw/password") // "";
+my $host = $config->get("mw/host") // "";
+my $protocol = $config->get("mw/protocol") // "";
+my $path = $config->get("mw/path") // "";
+
+my $iter = 0;
 
 proceed_template( $mwcontainer, $from, $to, $exclude );
 
@@ -75,23 +86,36 @@ sub proceed_template {
 				if ( $basetitle ne '' ) {
 					# Get text from original and paste
 					my $cut_text = cut_text( $mwcontainer, $baselang, $basetitle, $to );
-					#print $cut_text, "\n";
+					#print "***".$cut_text, "\n";
 					
 					my $rm_text = cut_text( $mwcontainer, $targetlang, $title, $from, "target" );
-					#print $rm_text, "\n";
+					#print "###".$cut_text, "\n";
 
 					my $text = $mw->get_page( { title => $title } )->{'*'};
 					$rm_text = quotemeta( $rm_text );
 					$text =~ s/$rm_text/$cut_text/g;
+										
+					foreach my $key ( keys %{$replacements} ){
+						
+						my $match = quotemeta( $key );
+						$text =~ s/$match/$replacements->{$key}/g;
+					}
 					
 					print $text;
 					# Modify now page
-					# edit( $mw, $title, $text, "Update Text" );
+					edit( $mw, $title, $text, "Replace $from" );
 
 				}
 				
 			}
 		}
+		
+		$iter++;
+		
+		if ( $iter > 2 ) {
+			last;
+		}
+		
 	}
 }
 
@@ -202,6 +226,9 @@ sub edit {
 	my $text = shift;
 	my $summary = shift;
 
+	$mw->login( {lgname => $user, lgpassword => $pass } )
+	|| die $mw->{error}->{code} . ': ' . $mw->{error}->{details};
+	
 	my $ref = $mw->get_page( { title => $pagename } );
 	unless ( $ref->{missing} ) {
 			my $timestamp = $ref->{timestamp};
