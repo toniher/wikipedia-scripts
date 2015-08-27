@@ -42,6 +42,8 @@ my $host = $config->get("mw/host") // "";
 my $protocol = $config->get("mw/protocol") // "";
 my $path = $config->get("mw/path") // "";
 
+$mwcontainer->{"target"}->{$targetlang}->login( {lgname => $user, lgpassword => $pass } ) || die $mwcontainer->{"target"}->{$targetlang}->{error}->{code} . ': ' . $mwcontainer->{"target"}->{$targetlang}->{error}->{details};
+
 my $iter = 0;
 
 proceed_template( $mwcontainer, $from, $to, $exclude );
@@ -101,7 +103,7 @@ sub proceed_template {
 						$text =~ s/$match/$replacements->{$key}/g;
 					}
 					
-					print $text;
+					#print $text;
 					# Modify now page
 					edit( $mw, $title, $text, "Replace $from" );
 
@@ -111,6 +113,7 @@ sub proceed_template {
 		}
 		
 		$iter++;
+		sleep(1);
 		
 		if ( $iter > 2 ) {
 			last;
@@ -226,9 +229,6 @@ sub edit {
 	my $text = shift;
 	my $summary = shift;
 
-	$mw->login( {lgname => $user, lgpassword => $pass } )
-	|| die $mw->{error}->{code} . ': ' . $mw->{error}->{details};
-	
 	my $ref = $mw->get_page( { title => $pagename } );
 	unless ( $ref->{missing} ) {
 			my $timestamp = $ref->{timestamp};
