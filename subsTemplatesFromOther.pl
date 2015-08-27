@@ -115,7 +115,7 @@ sub proceed_template {
 		$iter++;
 		sleep(1);
 		
-		if ( $iter > 2 ) {
+		if ( $iter > 0 ) {
 			last;
 		}
 		
@@ -198,12 +198,61 @@ sub cut_text {
 	# print page contents
 	my $text = $page->{'*'};
 	
-	my $detect = "(\{\{".$intemplate.".*?\}\})";
+	my $cut_text = processCutText( $intemplate, $text, 1 );
+		
+	return $cut_text;
+
+	
+}
+	
+sub processCutText {
+	
+	my $intemplate = shift;
+	my $text = shift;
+	my $iter = shift;
+	
+	if ( $iter > 100 ) {
+		die "Error here";
+	}
+	
+	
+	my $basetemplate = "\{\{".$intemplate;
+	
+	my $i = 0;
+	while ( $i < $iter ) {
+		
+		$basetemplate = $basetemplate.".*?\}\}";
+		
+		$i++;
+	}
+	
+	my $detect = "(".$basetemplate.")";
 	
 	my ( $cut_text ) = $text =~ /$detect/s;
+
+	if ( matchCurlyBraces( $cut_text ) ) {
+		return $cut_text;
+	} else {
+		return processCutText( $intemplate, $text, $iter + 1 );
+	}
 	
-	return $cut_text;
 }
+
+sub matchCurlyBraces {
+	
+	my $text = shift;
+	# TODO: To be done here
+	
+	my $left = () = $text =~ /\{/gi;
+	my $right = () = $text =~ /\}/gi;
+
+	if ( $left == $right ) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+	
 
 sub full_get {
 
