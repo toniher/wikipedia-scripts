@@ -92,6 +92,12 @@ sub proceed_template {
 					
 					my $rm_text = cut_text( $mwcontainer, $targetlang, $title, $from, "target" );
 					#print "###".$cut_text, "\n";
+					
+					if ( ( $cut_text=~/^\s*$/ ) || ( $rm_text=~/^\s*$/ ) ) {
+						# Empty, then, next
+						next;
+					}
+					
 
 					my $text = $mw->get_page( { title => $title } )->{'*'};
 					$rm_text = quotemeta( $rm_text );
@@ -115,7 +121,7 @@ sub proceed_template {
 		$iter++;
 		sleep(1);
 		
-		if ( $iter > 0 ) {
+		if ( $iter > 2 ) {
 			last;
 		}
 		
