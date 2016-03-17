@@ -87,8 +87,37 @@ sub processEntity {
 	if ( $title ) {
 		if ( $label ne $title ) {
 			print $id.": ".$label."-".$title."\n";
+			my $object = {};
+
+			my $detail = 0;
+
+			$object{"id"} = $id;
+			$object{"langs"} = {};
+			$object{"langs"}{$lang} = {};
+			$object{"langs"}{$lang}{"label"} = $label;
+			$object{"langs"}{$lang}{"title"} = $title;
+			$object{"langs"}{$lang}{"detail"} = $detail;
+			
+
 			# TODO: Handle other cases
 			# Capitalization
+			if ( lc( $label ) eq lc( $title ) ) {
+				$detail = 1;
+			} else {
+				my $modifTitle = $title;
+				# Remove last parenthesis
+				$modifTitle=~s/\(.*?\)\s*$//g;
+				
+				if ( $modifTitle eq $label ) {
+					$detail  = 2;
+				} else {
+
+				}
+				
+				
+			}
+			
+
 			# Parentheses
 			
 			# TODO: Submit to DB as a JSON
