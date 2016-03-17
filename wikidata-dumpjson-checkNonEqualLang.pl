@@ -3,7 +3,7 @@
 use JSON;
 use Parallel::ForkManager;
 use Data::Dumper;
- 
+
 use utf8;
 binmode(STDOUT, ":utf8");
 
@@ -11,6 +11,7 @@ binmode(STDOUT, ":utf8");
 my $dir = shift;
 my $procs = shift // 4;
 my $lang = shift // "ca";
+my $dirout = shift // "out";
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
@@ -27,23 +28,37 @@ while ( my $file = readdir(DIR) ) {
 	
 	my $pid= $fork->start and next;
 
-	processJSONfile( $dir."/".$file );
+	my $docsfile = processJSONfile( $dir."/".$file );
 	
+	my %report;
+	$report{"docs"} = $docsfile;
+
+	if ( ! -d $dirout ) {
+		mkdir( $dirout );
+	}
+	
+	# Output suitable for bulk upload with CouchDB
+	open(FILEOUT, ">", $dirout."/".$file.".json" ) or die "Cannow write";
+
+	print FILEOUT JSON->new->utf8(1)->encode(\%report);
+	close( FILEOUT );
+
 	$fork->finish;
 }
 
 $fork->wait_all_children;
 
-
 sub processJSONfile {
 	
 	my $file = shift;
-	
+	my $docs;
+
 	# Process JSON file
 	# Line by line is a JSON piece
 	
 	open ( FILE, "<:encoding(UTF-8)", $file) || die "Cannot open $file";
 	
+
 	while ( <FILE> ) {
 		
 		my $entityStr = $_;
@@ -51,13 +66,17 @@ sub processJSONfile {
 		$entityStr=~s/\,\s*$//g;
 		my $entity = JSON->new->utf8(1)->decode($entityStr);
 		
-		processEntity( $entity );
-		
+		my $doc = processEntity( $entity );
+
+		if ( $doc ) {
+			push( @{$docs}, $doc );
+		}
+
 	}
 	
 	close( FILE );
 	
-	
+	return $docs;
 }
 
 sub processEntity {
@@ -86,44 +105,42 @@ sub processEntity {
 
 	if ( $title ) {
 		if ( $label ne $title ) {
-			print $id.": ".$label."-".$title."\n";
 			my $object = {};
 
 			my $detail = 0;
 
-			$object{"id"} = $id;
-			$object{"langs"} = {};
-			$object{"langs"}{$lang} = {};
-			$object{"langs"}{$lang}{"label"} = $label;
-			$object{"langs"}{$lang}{"title"} = $title;
-			$object{"langs"}{$lang}{"detail"} = $detail;
+			$object->{"_id"} = $id;
+			$object->{"langs"} = {};
+			$object->{"langs"}->{$lang} = {};
+			$object->{"langs"}->{$lang}->{"label"} = $label;
+			$object->{"langs"}->{$lang}->{"title"} = $title;
 			
 
-			# TODO: Handle other cases
+			# Handle discrepancy cases
 			# Capitalization
 			if ( lc( $label ) eq lc( $title ) ) {
 				$detail = 1;
 			} else {
 				my $modifTitle = $title;
 				# Remove last parenthesis
-				$modifTitle=~s/\(.*?\)\s*$//g;
+				$modifTitle=~s/\s*\(.*?\)\s*$//g;
 				
-				if ( $modifTitle eq $label ) {
+				if ( $label eq $modifTitle ) {
 					$detail  = 2;
 				} else {
-
+					if ( lc( $label ) eq lc( $modifTitle ) ) {
+						$detail = 3;
+					}
 				}
-				
-				
 			}
-			
 
-			# Parentheses
-			
-			# TODO: Submit to DB as a JSON
+			$object->{"langs"}->{$lang}->{"detail"} = $detail;
+
+			return $object;
 		}
 		
 	}
 	
+	return 0;
 }
 
