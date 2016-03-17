@@ -87,6 +87,8 @@ sub processEntity {
 	my $title = "";
 
 	my $id = $entity->{"id"};
+	my $type = $entity->{"type"};
+	
 	if ( defined( $entity->{"labels"} ) ) {
 
 		if ( defined( $entity->{"labels"}->{$lang} ) ) {
@@ -110,6 +112,8 @@ sub processEntity {
 			my $detail = 0;
 
 			$object->{"_id"} = $id;
+			$object->{"type"} = $type;
+			
 			$object->{"langs"} = {};
 			$object->{"langs"}->{$lang} = {};
 			$object->{"langs"}->{$lang}->{"label"} = $label;
