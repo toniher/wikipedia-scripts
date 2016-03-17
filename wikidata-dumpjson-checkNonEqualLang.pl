@@ -36,5 +36,26 @@ sub processJSONfile {
 	
 	# Process JSON file
 	# Line by line is a JSON piece
+	
+	open ( FILE, "<", $file) || die "Cannot open $file";
+	
+	while ( <FILE> ) {
+		
+		my $entity = JSON->new->utf8(1)->decode($_);
+		
+		processEntity( $entity );
+		
+	}
+	
+	close( FILE );
+	
+	
+}
+
+sub processEntity {
+	
+	my $entity = shift;
+	
+	
 }
 
