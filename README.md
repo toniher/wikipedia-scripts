@@ -18,3 +18,28 @@ Repository for handy wikipedia scripts
 ## Replace one template from one Wikipedia to another one Wikipedia
 
     subsTemplatesFromOther.pl
+
+## List discrepancies between label and title in Wikidata
+
+	wikidata-dumpjson-checkNonEqualLang.pl
+
+### Upload in CouchDB
+
+	bulkupload-couchdb.pl
+
+### CouchDB index
+
+	function( doc ) {
+		if ( doc.hasOwnProperty("langs") ) {
+			for ( var lang in doc["langs"] ) {
+				if ( doc["langs"].hasOwnProperty(lang) ) {
+					if ( doc["langs"][lang].hasOwnProperty("detail") ) {
+						var label = doc["langs"][lang]["label"];
+						var title = doc["langs"][lang]["title"];
+						var detail = doc["langs"][lang]["detail"];
+						emit( [ lang, detail ], [ label, title ] );
+					}
+				}
+			}
+		}
+	}
