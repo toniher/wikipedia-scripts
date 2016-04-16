@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+use 5.010;
+
 use JSON;
 use Parallel::ForkManager;
 use Data::Dumper;
@@ -10,13 +12,16 @@ binmode(STDOUT, ":utf8");
 # Directory of dumps
 my $dir = shift;
 my $procs = shift // 4;
-my $lang = shift // "ca";
+my $langstr = shift // "ca,es"; #Two languages to check
 my $dirout = shift // "out";
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
 	exit;
 }
+
+my @langs = split(",", $langstr);
+
 
 opendir( DIR, $dir ) or die $!;
 
@@ -83,67 +88,80 @@ sub processEntity {
 	
 	my $entity = shift;
 
-	my $label = "";
-	my $title = "";
+	my $label = {};
+	my $title = {};
 
 	my $id = $entity->{"id"};
 	my $type = $entity->{"type"};
 	
-	if ( defined( $entity->{"labels"} ) ) {
+	my $object = {};
 
-		if ( defined( $entity->{"labels"}->{$lang} ) ) {
-			$label = $entity->{"labels"}->{$lang}->{"value"};
-		}
-		
-	}
+	my $detail = 0;
 
-	if ( defined( $entity->{"sitelinks"} ) ) {
+	$object->{"_id"} = $id;
+	$object->{"type"} = $type;
+	
+	$object->{"langs"} = {};
 
-		if ( defined( $entity->{"sitelinks"}->{$lang."wiki"} ) ) {
-			$title = $entity->{"sitelinks"}->{$lang."wiki"}->{"title"};
-		}
-		
-	}
-
-	if ( $title ) {
-		if ( $label ne $title ) {
-			my $object = {};
-
-			my $detail = 0;
-
-			$object->{"_id"} = $id;
-			$object->{"type"} = $type;
+	
+	foreach my $lang (@langs) {
+	
+		if ( defined( $entity->{"labels"} ) ) {
+	
+			if ( defined( $entity->{"labels"}->{$lang} ) ) {
+				$label->{$lang} = $entity->{"labels"}->{$lang}->{"value"};
+			}
 			
-			$object->{"langs"} = {};
-			$object->{"langs"}->{$lang} = {};
-			$object->{"langs"}->{$lang}->{"label"} = $label;
-			$object->{"langs"}->{$lang}->{"title"} = $title;
+		}
+	
+		if ( defined( $entity->{"sitelinks"} ) ) {
+	
+			if ( defined( $entity->{"sitelinks"}->{$lang."wiki"} ) ) {
+				$title->{$lang} = $entity->{"sitelinks"}->{$lang."wiki"}->{"title"};
+			}
 			
+		}
+	
+		
+		if ( $title->{$lang} ) {
+			if ( $label->{$lang} ne $title->{$lang} ) {
 
-			# Handle discrepancy cases
-			# Capitalization
-			if ( lc( $label ) eq lc( $title ) ) {
-				$detail = 1;
-			} else {
-				my $modifTitle = $title;
-				# Remove last parenthesis
-				$modifTitle=~s/\s*\(.*?\)\s*$//g;
+				$object->{"langs"}->{$lang} = {};
+				$object->{"langs"}->{$lang}->{"label"} = $label->{$lang};
+				$object->{"langs"}->{$lang}->{"title"} = $title->{$lang};
 				
-				if ( $label eq $modifTitle ) {
-					$detail  = 2;
+				# Handle discrepancy cases
+				# Capitalization
+				if ( lc( $label->{$lang} ) eq lc( $title->{$lang} ) ) {
+					$detail = 1;
 				} else {
-					if ( lc( $label ) eq lc( $modifTitle ) ) {
-						$detail = 3;
+					my $modifTitle = $title->{$lang};
+					# Remove last parenthesis
+					$modifTitle=~s/\s*\(.*?\)\s*$//g;
+					
+					if ( $label->{$lang} eq $modifTitle ) {
+						$detail  = 2;
+					} else {
+						if ( lc( $label->{$lang} ) eq lc( $modifTitle ) ) {
+							$detail = 3;
+						}
 					}
 				}
+	
+				$object->{"langs"}->{$lang}->{"detail"} = $detail;
+	
 			}
-
-			$object->{"langs"}->{$lang}->{"detail"} = $detail;
-
-			return $object;
+			
 		}
 		
 	}
+	
+	my @listkeys = keys %{$object->{"langs"}};
+
+	if ( scalar @listkeys > 0 ) {
+		return $object;
+	}
+	
 	
 	return 0;
 }
