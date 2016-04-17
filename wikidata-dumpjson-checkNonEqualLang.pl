@@ -147,6 +147,11 @@ sub processEntity {
 						}
 					}
 				}
+				
+				# Null label
+				if ( !$label->{$lang} ) {
+					$detail = -1;
+				}
 	
 				$object->{"langs"}->{$lang}->{"detail"} = $detail;
 	
