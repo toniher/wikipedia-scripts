@@ -122,41 +122,54 @@ sub processEntity {
 			
 		}
 	
-		
-		if ( $title->{$lang} ) {
-			if ( $label->{$lang} ne $title->{$lang} ) {
-
-				$object->{"langs"}->{$lang} = {};
+		# Let's handle property in a different way
+		if ( $type eq 'property' ) {
+			$object->{"langs"}->{$lang} = {};
+			
+			if ( defined( $label->{$lang} ) ) {
 				$object->{"langs"}->{$lang}->{"label"} = $label->{$lang};
-				$object->{"langs"}->{$lang}->{"title"} = $title->{$lang};
-				
-				# Handle discrepancy cases
-				# Capitalization
-				if ( lc( $label->{$lang} ) eq lc( $title->{$lang} ) ) {
-					$detail = 1;
-				} else {
-					my $modifTitle = $title->{$lang};
-					# Remove last parenthesis
-					$modifTitle=~s/\s*\(.*?\)\s*$//g;
+			} else {
+				$object->{"langs"}->{$lang}->{"label"} = undef;
+			}
+
+		} else {
+		
+			if ( $title->{$lang} ) {
+				if ( $label->{$lang} ne $title->{$lang} ) {
+	
+					$object->{"langs"}->{$lang} = {};
+					$object->{"langs"}->{$lang}->{"label"} = $label->{$lang};
+					$object->{"langs"}->{$lang}->{"title"} = $title->{$lang};
 					
-					if ( $label->{$lang} eq $modifTitle ) {
-						$detail  = 2;
+					# Handle discrepancy cases
+					# Capitalization
+					if ( lc( $label->{$lang} ) eq lc( $title->{$lang} ) ) {
+						$detail = 1;
 					} else {
-						if ( lc( $label->{$lang} ) eq lc( $modifTitle ) ) {
-							$detail = 3;
+						my $modifTitle = $title->{$lang};
+						# Remove last parenthesis
+						$modifTitle=~s/\s*\(.*?\)\s*$//g;
+						
+						if ( $label->{$lang} eq $modifTitle ) {
+							$detail  = 2;
+						} else {
+							if ( lc( $label->{$lang} ) eq lc( $modifTitle ) ) {
+								$detail = 3;
+							}
 						}
 					}
+					
+					# Null label
+					if ( !$label->{$lang} ) {
+						$detail = -1;
+					}
+		
+					$object->{"langs"}->{$lang}->{"detail"} = $detail;
+		
 				}
 				
-				# Null label
-				if ( !$label->{$lang} ) {
-					$detail = -1;
-				}
-	
-				$object->{"langs"}->{$lang}->{"detail"} = $detail;
-	
 			}
-			
+		
 		}
 		
 	}
