@@ -161,6 +161,8 @@ sub processEntity {
 					
 					# Null label
 					if ( !$label->{$lang} ) {
+						# Let's put undef
+						$object->{"langs"}->{$lang}->{"label"} = undef;
 						$detail = -1;
 					}
 		
