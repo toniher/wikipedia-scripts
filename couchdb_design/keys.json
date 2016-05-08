@@ -1,0 +1,10 @@
+{
+   "_id": "_design/keys",
+   "language": "javascript",
+   "views": {
+       "type": {
+           "map": "function(doc) {\n    emit(doc.type, 1);\n}",
+           "reduce": "function(keys, values) {\n  return sum(values);\n}"
+       }
+   }
+}

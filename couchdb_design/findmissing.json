@@ -1,0 +1,12 @@
+{
+   "_id": "_design/findmissing",
+   "language": "javascript",
+   "views": {
+       "langpair": {
+           "map": "        function( doc ) {\n                if ( doc.hasOwnProperty(\"langs\") ) {\n                        for ( var lang in doc[\"langs\"] ) {\n                                if ( doc[\"langs\"].hasOwnProperty(lang) ) {\n                                        if ( doc[\"langs\"][lang].hasOwnProperty(\"detail\") ) {\n                                                var label = doc[\"langs\"][lang][\"label\"];\n                                                var title = doc[\"langs\"][lang][\"title\"];\n                                                var detail = doc[\"langs\"][lang][\"detail\"];\n                                                emit( [ lang, detail ], [ label, title ] );\n                                        }\n                                }\n                        }\n                }\n        }\n"
+       },
+       "type": {
+           "map": "function( doc ) {\n\n\tif ( doc.hasOwnProperty(\"langs\") && doc.hasOwnProperty(\"type\") ) {\n\n\t\tvar type = doc[\"type\"];\n\t\tfor ( var lang in doc[\"langs\"] ) {\n\t\t\n\t\t\tif ( doc[\"langs\"].hasOwnProperty(lang) ) {\n\t\t\t\n\t\t\t\tif ( doc[\"langs\"][lang].hasOwnProperty(\"detail\") ) {\n\t\t\t\t\n\t\t\t\t\tvar label = doc[\"langs\"][lang][\"label\"];\n\t\t\t\t\tvar detail = doc[\"langs\"][lang][\"detail\"];\n\t\t\t\t\t\n\t\t\t\t\temit( [ type, lang, detail ], doc._id );\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}"
+       }
+   }
+}
