@@ -1,0 +1,10 @@
+{
+	"type": "AND",
+	"props": {
+		"P149" : "Q34636"
+	},
+	"maxcoords": {
+		"P625": "put base coord here",
+		"max": "kmvalue"
+	}
+}
