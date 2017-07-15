@@ -104,6 +104,7 @@ sub detectString {
 			
 			if ( $str=~/$match/ ) {
 
+                
 				if(ref($propVal) eq 'ARRAY'){
 				
 					foreach my $item ( @{$propVal} ) {
@@ -136,10 +137,10 @@ sub detectString {
 			foreach my $prop ( keys %{ $conf->{"propsnot"} } ) {
 
 			
-				my $propVal = $conf->{"props"}->{$prop};
+				my $propVal = $conf->{"propsnot"}->{$prop};
 
 				my $match = "\"".$prop."\"";
-				
+			
 				if ( $str=~/$match/ ) {
 	
 					if(ref($propVal) eq 'ARRAY'){
