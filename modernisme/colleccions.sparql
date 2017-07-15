@@ -1,0 +1,11 @@
+SELECT ?item ?itemLabel ?collectionLabel ?typeLabel WHERE {
+  ?item wdt:P195 ?collection .
+  FILTER (?collection IN  ( wd:Q861252, wd:Q526170, wd:Q4894835, wd:Q15735772, wd:Q4889477, wd:Q9046976, wd:Q167273, wd:Q428559, wd:Q1630272,  wd:Q3816452, wd:Q3824294, wd:Q4886818, wd:Q1050032, wd:Q5476145, wd:Q11913536, wd:Q22026414, wd:Q634421, wd:Q17301596, wd:Q15302972, wd:Q507282, wd:Q3571337, wd:Q4894452, wd:Q24084549, wd:Q23718975, wd:Q20106354, wd:Q11938061, wd:Q3826150, wd:Q23733737, wd:Q24040657, wd:Q22976361, wd:Q212595, wd:Q3820914, wd:Q24046038, wd:Q24340719, wd:Q167273 ) )
+  FILTER NOT EXISTS { ?item wdt:P31 wd:Q5  }
+  OPTIONAL { ?item wdt:P31 ?type }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "ca" . }
+}
+
+
+
+

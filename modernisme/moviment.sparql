@@ -1,0 +1,6 @@
+SELECT ?item ?itemLabel WHERE {
+  ?item wdt:P135 wd:Q34636 .
+  FILTER NOT EXISTS { ?item wdt:P31 wd:Q5  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],ca". }
+}
+
