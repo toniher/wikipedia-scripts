@@ -119,7 +119,6 @@ sub detectEntity {
 									if ( $value ) {
 										if ( $value eq $propVal ) {
 											$in = 1;
-                                            print STDERR $id, "\n";
 										}
 									}
 									
@@ -133,6 +132,63 @@ sub detectEntity {
 			}
 			
 		}
+		
+	}
+	
+	if ( $in ) {
+	
+		if ( defined( $conf->{"propsnot"} ) ) {
+	
+			foreach my $prop ( keys %{ $conf->{"propsnot"} } ) {
+	
+				if ( defined( $entity->{"claims"} ) ) {
+					
+					$claims = $entity->{"claims"};
+					
+					# Exists pro
+					if ( defined( $claims->{$prop} ) ) {
+						
+						my $propVal = $conf->{"propsnot"}->{$prop};
+						
+						my $snaks = $claims->{$prop};
+					
+	
+						foreach my $propAss (  @{$snaks} ) {
+							my $mainsnak = $propAss->{"mainsnak"};
+							
+							if ( defined( $mainsnak->{"snaktype"} ) ) {
+								
+								if ( $mainsnak->{"snaktype"} eq 'value' ) {
+									
+									if ( defined( $mainsnak->{"datavalue"} ) ) {
+									
+										my $datavalue = $mainsnak->{"datavalue"};
+										
+										my $value = processQvalue( $datavalue );
+										
+										if ( $value ) {
+											if ( $value eq $propVal ) {
+												$in = 0;
+											}
+										}
+										
+									}
+								}
+							}
+						}
+						
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	if ( $in ) {
+		print STDERR $id, "\n";
 	}
 	
 	return $in;
