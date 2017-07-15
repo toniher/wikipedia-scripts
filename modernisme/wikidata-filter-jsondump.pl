@@ -67,7 +67,7 @@ sub processJSONfile {
 		$entityStr=~s/\,\s*$//g;
 		my $entity = JSON->new->utf8(1)->decode($entityStr);
 		
-		my $doc = processEntity( $entity );
+		my $doc = detectEntity( $entity );
 
 		if ( $doc ) {
 			print $fhout $pre;
@@ -86,43 +86,47 @@ sub detectEntity {
 	my $entity = shift;
 	my $in = 0;
 	
-	if ( defined( $entity->{"claims"} ) ) {
+	if ( defined( $conf->{"props"} ) ) {
 		
-		$claims = $entity->{"claims"};
-		
-		foreach my $claim ( keys %{ $claims } ) {
-			
-			# Exists pro
-			if ( defined( $conf->{"props"}->{$claim} ) ) {
+		foreach my $prop ( $conf->{"props"} ) {
+	
+			if ( defined( $entity->{"claims"} ) ) {
 				
-				my $propVal = $conf->{"props"}->{$claim};
-			
-				if ( defined( $claims->{$claim}->{"mainsnak"} ) ) {
-					my $mainsnak = $claims->{$claim}->{"mainsnak"};
-					if ( defined( $mainsnak->{"snaktype"} ) ) {
-						
-						if ( $mainsnak->{"snaktype"} eq 'value' ) {
+				$claims = $entity->{"claims"};
+				
+				# Exists pro
+				if ( defined( $claims->{$prop} ) ) {
+					
+					my $propVal = $conf->{"props"}->{$prop};
+				
+					if ( defined( $claims->{$prop}->{"mainsnak"} ) ) {
+						my $mainsnak = $claims->{$prop}->{"mainsnak"};
+						if ( defined( $mainsnak->{"snaktype"} ) ) {
 							
-							if ( defined( $mainsnak->{"datavalue"} ) ) {
-							
-								my $datavalue = $mainsnak->{"datavalue"};
+							if ( $mainsnak->{"snaktype"} eq 'value' ) {
 								
-								my $value = processQvalue( $datavalue );
+								if ( defined( $mainsnak->{"datavalue"} ) ) {
 								
-								if ( $value ) {
-									if ( $value eq $propVal ) {
-										$in = 1;
+									my $datavalue = $mainsnak->{"datavalue"};
+									
+									my $value = processQvalue( $datavalue );
+									
+									if ( $value ) {
+										if ( $value eq $propVal ) {
+											$in = 1;
+										}
 									}
+									
 								}
-								
 							}
 						}
 					}
+					
 				}
 				
 			}
+			
 		}
-		
 	}
 	
 	return $in;
