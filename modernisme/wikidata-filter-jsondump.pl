@@ -85,6 +85,7 @@ sub detectEntity {
 	
 	my $entity = shift;
 	my $in = 0;
+    my $id = $entity->{"id"};
 	
 	if ( defined( $conf->{"props"} ) ) {
 		
@@ -101,7 +102,8 @@ sub detectEntity {
 					
 					my $snaks = $claims->{$prop};
 				
-					foreach my $propAss ( $snaks ) {
+
+					foreach my $propAss (  @{$snaks} ) {
 						my $mainsnak = $propAss->{"mainsnak"};
 						
 						if ( defined( $mainsnak->{"snaktype"} ) ) {
@@ -117,6 +119,7 @@ sub detectEntity {
 									if ( $value ) {
 										if ( $value eq $propVal ) {
 											$in = 1;
+                                            print STDERR $id, "\n";
 										}
 									}
 									
