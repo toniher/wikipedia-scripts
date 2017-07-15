@@ -13,6 +13,7 @@ binmode(STDOUT, ":utf8");
 my $dir = shift;
 my $conffile = shift // "conf.json";
 my $dirout = shift // "filter";
+my $mode = shift // "fast";
 my $procs = shift // 4;
 
 my $conf = processConfFile( $conffile );
@@ -67,8 +68,14 @@ sub processJSONfile {
 		$entityStr=~s/\,\s*$//g;
 		my $entity = JSON->new->utf8(1)->decode($entityStr);
 		
-		my $doc = detectEntity( $entity );
-
+		my $doc;
+		
+		if ( $mode eq 'fast' ) {
+			$doc = detectString( $entityStr );
+		} else {
+			$doc = detectEntity( $entity );
+		}
+		
 		if ( $doc ) {
 			print $fhout $pre;
 		}
@@ -80,6 +87,91 @@ sub processJSONfile {
 	return 1;
 }
 
+
+sub detectString {
+	
+	my $str = shift;
+	
+	my $in = 0;
+
+	if ( defined( $conf->{"props"} ) ) {
+		
+		foreach my $prop ( keys %{ $conf->{"props"} } ) {
+			
+			my $propVal = $conf->{"props"}->{$prop};
+
+			my $match = "\"".$prop."\"";
+			
+			if ( $str=~/$match/ ) {
+
+				if(ref($propVal) eq 'ARRAY'){
+				
+					foreach my $item ( @{$propVal} ) {
+						
+						my $matchq = "\"".$propVal."\"";
+						
+						if ( $str=~/$matchq/ ) {
+							$in = 1;
+						}
+					}	
+				
+				} else {
+					
+					my $matchq = "\"".$propVal."\"";
+					if ( $str=~/$matchq/ ) {
+						$in = 1;
+					}
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	if ( $in ) {
+	
+		if ( defined( $conf->{"propsnot"} ) ) {
+		
+			foreach my $prop ( keys %{ $conf->{"propsnot"} } ) {
+
+			
+				my $propVal = $conf->{"props"}->{$prop};
+
+				my $match = "\"".$prop."\"";
+				
+				if ( $str=~/$match/ ) {
+	
+					if(ref($propVal) eq 'ARRAY'){
+					
+						foreach my $item ( @{$propVal} ) {
+							
+							my $matchq = "\"".$propVal."\"";
+							
+							if ( $str=~/$matchq/ ) {
+								$in = 0;
+							}
+						}	
+					
+					} else {
+						
+						my $matchq = "\"".$propVal."\"";
+						if ( $str=~/$matchq/ ) {
+							$in = 0;
+						}
+					}
+					
+				}
+			
+			}
+			
+		}
+		
+	}
+	
+	return $in;
+	
+}
 
 sub detectEntity {
 	
@@ -117,8 +209,19 @@ sub detectEntity {
 									my $value = processQvalue( $datavalue );
 									
 									if ( $value ) {
-										if ( $value eq $propVal ) {
-											$in = 1;
+										
+										if(ref($propVal) eq 'ARRAY'){
+										
+											foreach my $item ( @{$propVal} ) {
+												if ( $value eq $item ) {
+													$in = 1;
+												}	
+											}
+										
+										} else {
+											if ( $value eq $propVal ) {
+												$in = 1;
+											}
 										}
 									}
 									
@@ -166,7 +269,15 @@ sub detectEntity {
 										
 										my $value = processQvalue( $datavalue );
 										
-										if ( $value ) {
+										if(ref($propVal) eq 'ARRAY'){
+										
+											foreach my $item ( @{$propVal} ) {
+												if ( $value eq $item ) {
+													$in = 0;
+												}	
+											}
+										
+										} else {
 											if ( $value eq $propVal ) {
 												$in = 0;
 											}
@@ -236,5 +347,4 @@ sub processQvalue {
 	return $value;
 	
 }
-
 
