@@ -11,9 +11,9 @@ binmode(STDOUT, ":utf8");
 
 # Directory of dumps
 my $dir = shift;
-my $procs = shift // 4;
 my $conffile = shift // "conf.json";
-my $dirout = "filter";
+my $dirout = shift // "filter";
+my $procs = shift // 4;
 
 my $conf = processConfFile( $conffile );
 
