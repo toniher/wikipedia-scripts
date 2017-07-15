@@ -11,6 +11,14 @@ SELECT ?item ?itemLabel ?collectionLabel WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],ca". }
 }
 
+SELECT ?item ?itemLabel ?collectionLabel ?typeLabel WHERE {
+  ?item wdt:P195 ?collection .
+  FILTER (?collection IN (wd:Q4886818, wd:Q5476145) )
+  FILTER NOT EXISTS { ?item wdt:P31 wd:Q5  }
+  OPTIONAL { ?item wdt:P31 ?type }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "ca" . }
+}
+
 SELECT ?item ?itemLabel ?muniLabel WHERE {
   ?item wdt:P149 wd:Q34636 .
   wd:Q1492 wdt:P625 ?loc .
