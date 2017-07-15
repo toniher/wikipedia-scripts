@@ -13,12 +13,18 @@ binmode(STDOUT, ":utf8");
 my $dir = shift;
 my $procs = shift // 4;
 my $conffile = shift // "conf.json";
+my $dirout = "filter";
+
+my $conf = processConfFile( $conffile );
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
 	exit;
 }
 
+if ( ! -d $dirout ) {
+	mkdir( $dirout );
+}
 
 opendir( DIR, $dir ) or die $!;
 
@@ -30,20 +36,11 @@ while ( my $file = readdir(DIR) ) {
 	
 	my $pid= $fork->start and next;
 
-	my $docsfile = processJSONfile( $dir."/".$file );
-	
-	my %report;
-	$report{"docs"} = $docsfile;
+	open($fhout, ">", $dirout."/".$file.".json" ) or die "Cannow write";
 
-	if ( ! -d $dirout ) {
-		mkdir( $dirout );
-	}
+	&processJSONfile( $dir."/".$file, $fhout );
 	
-	# Output suitable for bulk upload with CouchDB
-	open(FILEOUT, ">", $dirout."/".$file.".json" ) or die "Cannow write";
-
-	print FILEOUT JSON->new->utf8(1)->encode(\%report);
-	close( FILEOUT );
+	close( $fhout );
 
 	$fork->finish;
 }
@@ -53,7 +50,7 @@ $fork->wait_all_children;
 sub processJSONfile {
 	
 	my $file = shift;
-	my $docs;
+	my $fhout = shift;
 
 	# Process JSON file
 	# Line by line is a JSON piece
@@ -64,6 +61,8 @@ sub processJSONfile {
 	while ( <FILE> ) {
 		
 		my $entityStr = $_;
+		my $pre = $_;
+	
 		# Remove final comma
 		$entityStr=~s/\,\s*$//g;
 		my $entity = JSON->new->utf8(1)->decode($entityStr);
@@ -71,14 +70,14 @@ sub processJSONfile {
 		my $doc = processEntity( $entity );
 
 		if ( $doc ) {
-			push( @{$docs}, $doc );
+			print $fhout $pre;
 		}
 
 	}                             
 	
 	close( FILE );
 	
-	return $docs;
+	return 1;
 }
 
 
@@ -92,21 +91,35 @@ sub detectEntity {
 		$claims = $entity->{"claims"};
 		
 		foreach my $claim ( keys %{ $claims } ) {
-			if ( defined( $claims->{$claim}->{"mainsnak"} ) ) {
-				my $mainsnak = $claims->{$claim}->{"mainsnak"};
-				if ( defined( $mainsnak->{"snaktype"} ) ) {
-					
-					if ( $mainsnak->{"snaktype"} eq 'value' ) {
+			
+			# Exists pro
+			if ( defined( $conf->{"props"}->{$claim} ) ) {
+				
+				my $propVal = $conf->{"props"}->{$claim};
+			
+				if ( defined( $claims->{$claim}->{"mainsnak"} ) ) {
+					my $mainsnak = $claims->{$claim}->{"mainsnak"};
+					if ( defined( $mainsnak->{"snaktype"} ) ) {
 						
-						if ( defined( $mainsnak->{"datavalue"} ) ) {
-						
-							my $datavalue = $mainsnak->{"datavalue"};
+						if ( $mainsnak->{"snaktype"} eq 'value' ) {
 							
-							my $value = processPvalue( $datavalue );
+							if ( defined( $mainsnak->{"datavalue"} ) ) {
 							
+								my $datavalue = $mainsnak->{"datavalue"};
+								
+								my $value = processQvalue( $datavalue );
+								
+								if ( $value ) {
+									if ( $value eq $propVal ) {
+										$in = 1;
+									}
+								}
+								
+							}
 						}
 					}
 				}
+				
 			}
 		}
 		
@@ -116,28 +129,46 @@ sub detectEntity {
 	
 }
 
-sub processEntity {
+sub processConfFile {
 	
-	my $entity = shift;
-
-	my $label = {};
-	my $title = {};
-
-	my $id = $entity->{"id"};
-	my $type = $entity->{"type"};
+	my $file = shift;
 	
-	my $object = {};
-
-	my $detail = 0;
-
-	$object->{"_id"} = $id;
-	$object->{"type"} = $type;
+	my $jsonStr = "";
 	
-	$object->{"langs"} = {};
+	open ( FILE, "<:encoding(UTF-8)", $file) || die "Cannot open $file";
+	
 
+	while ( <FILE> ) {
+		$jsonStr.= $_;
+	}
+	
+	close( FILE );
 
 	
+	my $confEntity = JSON->new->utf8(1)->decode($jsonStr);
+
+	return $confEntity;
 	
-	return 0;
 }
+
+sub processQvalue {
+	
+	my $datavalue = shift;
+	my $value = 0;
+	
+	if ( defined( $datavalue->{"value"} ) ) {
+		
+		if ( defined( $datavalue->{"value"}->{"entity-type"} ) ) {
+		
+			if ( $datavalue->{"value"}->{"entity-type"} eq 'item' ) {
+				$value =  $datavalue->{"value"}->{"id"};
+			}
+		
+		}
+	}
+	
+	return $value;
+	
+}
+
 
