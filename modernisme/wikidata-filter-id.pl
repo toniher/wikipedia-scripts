@@ -60,17 +60,12 @@ sub processJSONfile {
 
 	while ( <FILE> ) {
 		
-		my $entityStr = $_;
 		my $pre = $_;
-	
-		# Remove final comma
-		$entityStr=~s/\,\s*$//g;
-		my $entity = JSON->new->utf8(1)->decode($entityStr);
-		
+
 		my $doc;
 		
 
-		$doc = detectEntity( $entity );
+		$doc = detectString( $pre );
 		
 		if ( $doc ) {
 			print $fhout $pre;
@@ -84,11 +79,12 @@ sub processJSONfile {
 }
 
 
-sub detectEntity {
+
+sub detectString {
 	
 	my $entity = shift;
 	my $in = 0;
-    my $id = $entity->{"id"};
+	my ($id) = $_=~/\"id\"\:\"(\S+?)\"/;
 	
 	if ( defined( $ids{$id} ) ) {
 		$in = 1;
@@ -97,6 +93,8 @@ sub detectEntity {
 	return $in;
 	
 }
+
+
 
 sub processIds {
 	
