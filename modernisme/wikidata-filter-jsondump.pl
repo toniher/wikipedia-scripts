@@ -88,7 +88,7 @@ sub detectEntity {
 	
 	if ( defined( $conf->{"props"} ) ) {
 		
-		foreach my $prop ( $conf->{"props"} ) {
+		foreach my $prop ( keys %{ $conf->{"props"} } ) {
 	
 			if ( defined( $entity->{"claims"} ) ) {
 				
@@ -98,9 +98,12 @@ sub detectEntity {
 				if ( defined( $claims->{$prop} ) ) {
 					
 					my $propVal = $conf->{"props"}->{$prop};
+					
+					my $snaks = $claims->{$prop};
 				
-					if ( defined( $claims->{$prop}->{"mainsnak"} ) ) {
-						my $mainsnak = $claims->{$prop}->{"mainsnak"};
+					foreach my $propAss ( $snaks ) {
+						my $mainsnak = $propAss->{"mainsnak"};
+						
 						if ( defined( $mainsnak->{"snaktype"} ) ) {
 							
 							if ( $mainsnak->{"snaktype"} eq 'value' ) {
