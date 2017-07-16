@@ -32,6 +32,18 @@ my $fork= new Parallel::ForkManager( $procs );
 
 open($fhout, ">:utf8", $fileout ) or die "Cannow write";
 
+my @line = ();
+
+foreach my $val ( @{$conf->{"order"}} ) {
+	my $label = $val;
+	if ( defined( $conf->{"props"}->{$val} ) ) {
+		$label = $conf->{"props"}->{$val};
+	}
+	push( @line, $label );
+}
+
+print $fhout join("\t", @line), "\n";
+
 while ( my $file = readdir(DIR) ) {
 	
 	if ( $file=~/^\./ ) { next; }
