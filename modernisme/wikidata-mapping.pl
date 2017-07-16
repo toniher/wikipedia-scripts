@@ -243,8 +243,23 @@ sub processQvalue {
 			if ( defined( $datavalue->{"type"} ) ) {
 				
 				if ( $datavalue->{"type"} eq 'string' ) {
-					$value =  $datavalue->{"value"};
+					$value =  "\"".$datavalue->{"value"}."\"";
 				}
+				
+				if ( $datavalue->{"type"} eq 'globecoordinate' ) {
+					
+					if ( defined( $datavalue->{"value"}->{"latitude"} ) && defined( $datavalue->{"value"}->{"longitude"} ) ) {
+						
+						my $lat = $datavalue->{"value"}->{"latitude"};
+						my $lon = $datavalue->{"value"}->{"longitude"};
+						
+						$value =  "\"".$lat.", ".$lon."\"";
+
+					}
+					
+					
+				}		
+				
 			}
 			
 		}
