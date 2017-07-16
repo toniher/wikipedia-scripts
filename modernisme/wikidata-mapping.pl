@@ -17,7 +17,7 @@ my $qlist = shift // "qlist.txt";
 my $procs = shift // 4;
 
 my $conf = processConfFile( $conffile );
-my %qhash = {};
+my %qhash;
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
@@ -66,15 +66,6 @@ while ( my $file = readdir(DIR) ) {
 $fork->wait_all_children;
 
 close( $fhout );
-
-open($fhlout, ">:utf8", $qlist ) or die "Cannow write";
-
-foreach my $val ( sort keys %qhash ) {
-	print $val, "\n";
-}
-
-close( $fhlout );
-
 
 sub processJSONfile {
 	
@@ -183,7 +174,7 @@ sub processEntity {
 								
 									my $datavalue = $mainsnak->{"datavalue"};
 									
-									my $value = processQvalue( $datavalue );
+									my $value = processQvalue( $datavalue, $entity->{"id"} );
 									
 									if ( $value ) {
 										
@@ -239,6 +230,7 @@ sub processConfFile {
 sub processQvalue {
 	
 	my $datavalue = shift;
+    my $ref = shift;
 	my $value = 0;
 	
 	if ( defined( $datavalue->{"value"} ) ) {
@@ -246,8 +238,10 @@ sub processQvalue {
 		if ( defined( $datavalue->{"value"}->{"entity-type"} ) ) {
 		
 			if ( $datavalue->{"value"}->{"entity-type"} eq 'item' ) {
-				$value =  $datavalue->{"value"}->{"id"};
-				$qhash{$value} = 1;
+
+				if ( $datavalue->{"value"}->{"id"} =~ /^Q/ ) {
+			        $value = $datavalue->{"value"}->{"id"};
+                }
 			}
 		
 		} else {
