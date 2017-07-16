@@ -87,7 +87,7 @@ sub processJSONfile {
 }
 
 
-sub detectEntity {
+sub processEntity {
 	
 	my $entity = shift;
     
@@ -95,32 +95,32 @@ sub detectEntity {
 	
 	my %store = {};
 	
-	my $id = $entity->{"id"};
+    $store{"id"} = $entity->{"id"};
 	
-	my $labelCa = "";
-	my $descCa = "";
-	my $labelEn = "";
-	my $descEn = "";
+	$store{"labelCa"} = "";
+	$store{"descCa"} = "";
+    $store{"labelEn"} = "";
+	$store{"descEn"} = "";
 	
 	if ( defined( $entity->{"labels"} ) ) {
 		
 		if ( defined( $entity->{"labels"}->{"ca"} ) ) {
-			$labelCa = $entity->{"labels"}->{"ca"};
+			$store{"labelCa"} = $entity->{"labels"}->{"ca"};
 		}
 
 		if ( defined( $entity->{"labels"}->{"en"} ) ) {
-			$labelEn = $entity->{"labels"}->{"en"};
+			$store{"labelEn"} = $entity->{"labels"}->{"en"};
 		}
 	}
 	
 	if ( defined( $entity->{"descriptions"} ) ) {
 		
 		if ( defined( $entity->{"descriptions"}->{"ca"} ) ) {
-			$descCa = $entity->{"descriptions"}->{"ca"};
+			$store{"descCa"} = $entity->{"descriptions"}->{"ca"};
 		}
 
 		if ( defined( $entity->{"descriptions"}->{"en"} ) ) {
-			$descEn = $entity->{"descriptions"}->{"en"};
+			$store{"descEn"} = $entity->{"descriptions"}->{"en"};
 		}
 	}
 	
@@ -133,9 +133,10 @@ sub detectEntity {
 				$claims = $entity->{"claims"};
 				
 				if ( ! defined( $store{$prop} ) ) {
-					$store{$prop} = [];
+					$store{$prop} = ();
 				}
-				
+                print $prop, "\n";			
+	
 				# Exists pro
 				if ( defined( $claims->{$prop} ) ) {
 										
@@ -173,12 +174,12 @@ sub detectEntity {
 		}
 		
 	}
-	
-	my (@line) = [];
+
+    print Dumper( \%store );	
+	my (@line) = ();
 	
 	foreach my $val ( keys %store ) {
-		
-		push( @line, join(", ", @{$val} ) );
+		push( @line, join(", ", @{$store{$val}} ) );
 	}
 	
 	return join( "\t", @line )."\n" ;
@@ -191,7 +192,7 @@ sub processConfFile {
 	
 	my $jsonStr = "";
 	
-	open ( FILE, "<:encoding(UTF-8)", $file) || die "Cannot open $file";
+	open ( FILE, "<", $file) || die "Cannot open $file";
 	
 
 	while ( <FILE> ) {
