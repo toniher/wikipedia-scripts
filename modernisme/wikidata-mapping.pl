@@ -93,49 +93,58 @@ sub detectEntity {
     
 	my $text = "";
 	
-	my %store = {};
+	my %store;
 	
-	my $id = $entity->{"id"};
+	$store{"id"} = ( $entity->{"id"} );
 	
-	my $labelCa = "";
-	my $descCa = "";
-	my $labelEn = "";
-	my $descEn = "";
+	$store{"labelCa"} = ( );
+	$store{"descCa"} = ( );
+	$store{"labelEn"} = ( );
+	$store{"descEn"} = ( );
 	
 	if ( defined( $entity->{"labels"} ) ) {
 		
 		if ( defined( $entity->{"labels"}->{"ca"} ) ) {
-			$labelCa = $entity->{"labels"}->{"ca"};
+			if ( defined( $entity->{"labels"}->{"ca"}->{"value"} ) ) {
+				$store{"labelCa"} = ( $entity->{"labels"}->{"ca"}->{"value"} );
+			}
 		}
 
 		if ( defined( $entity->{"labels"}->{"en"} ) ) {
-			$labelEn = $entity->{"labels"}->{"en"};
+			if ( defined( $entity->{"labels"}->{"en"}->{"value"} ) ) {
+				$store{"labelEn"} = ( $entity->{"labels"}->{"en"}->{"value"} );
+			}
 		}
 	}
 	
 	if ( defined( $entity->{"descriptions"} ) ) {
 		
 		if ( defined( $entity->{"descriptions"}->{"ca"} ) ) {
-			$descCa = $entity->{"descriptions"}->{"ca"};
+			if ( defined( $entity->{"descriptions"}->{"ca"}->{"value"} ) ) {
+				$store{"descCa"} = ( $entity->{"descriptions"}->{"ca"}->{"value"} );
+			}
 		}
 
 		if ( defined( $entity->{"descriptions"}->{"en"} ) ) {
-			$descEn = $entity->{"descriptions"}->{"en"};
+			if ( defined( $entity->{"descriptions"}->{"en"}->{"value"} ) ) {
+				$store{"descEn"} = ( $entity->{"descriptions"}->{"en"}->{"value"} );
+			}
 		}
 	}
 	
 	if ( defined( $conf->{"props"} ) ) {
-		
+				
 		foreach my $prop ( keys %{ $conf->{"props"} } ) {
+
+			if ( ! defined( $store{$prop} ) ) {
+				$store{$prop} = ();
+			}
 	
 			if ( defined( $entity->{"claims"} ) ) {
 				
 				$claims = $entity->{"claims"};
 				
-				if ( ! defined( $store{$prop} ) ) {
-					$store{$prop} = [];
-				}
-				
+
 				# Exists pro
 				if ( defined( $claims->{$prop} ) ) {
 										
@@ -174,11 +183,11 @@ sub detectEntity {
 		
 	}
 	
-	my (@line) = [];
+	my (@line) = ();
 	
-	foreach my $val ( keys %store ) {
+	foreach my $val ( @{$conf->{"order"}} ) {
 		
-		push( @line, join(", ", @{$val} ) );
+		push( @line, join(", ", @{$store{$val}} ) );
 	}
 	
 	return join( "\t", @line )."\n" ;
