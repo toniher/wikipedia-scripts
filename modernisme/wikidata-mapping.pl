@@ -32,17 +32,17 @@ my $fork= new Parallel::ForkManager( $procs );
 
 open($fhout, ">:utf8", $fileout ) or die "Cannow write";
 
-my @line = ();
+my @head = ();
 
 foreach my $val ( @{$conf->{"order"}} ) {
 	my $label = $val;
 	if ( defined( $conf->{"props"}->{$val} ) ) {
 		$label = $conf->{"props"}->{$val};
 	}
-	push( @line, $label );
+	push( @head, $label );
 }
 
-print $fhout join("\t", @line), "\n";
+print $fhout join("\t", @head), "\n";
 
 while ( my $file = readdir(DIR) ) {
 	
@@ -194,6 +194,7 @@ sub processEntity {
 		
 	}
 
+	my @line = ();
 	
 	foreach my $val ( @{$conf->{"order"}} ) {
 		push( @line, join(", ", @{$store{$val}} ) );
@@ -238,6 +239,14 @@ sub processQvalue {
 				$value =  $datavalue->{"value"}->{"id"};
 			}
 		
+		} else {
+			if ( defined( $datavalue->{"type"} ) ) {
+				
+				if ( $datavalue->{"type"} eq 'string' ) {
+					$value =  $datavalue->{"value"};
+				}
+			}
+			
 		}
 	}
 	
