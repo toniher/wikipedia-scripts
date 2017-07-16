@@ -87,7 +87,7 @@ sub processJSONfile {
 }
 
 
-sub detectEntity {
+sub processEntity {
 	
 	my $entity = shift;
     
@@ -144,7 +144,6 @@ sub detectEntity {
 				
 				$claims = $entity->{"claims"};
 				
-
 				# Exists pro
 				if ( defined( $claims->{$prop} ) ) {
 										
@@ -182,11 +181,9 @@ sub detectEntity {
 		}
 		
 	}
-	
-	my (@line) = ();
+
 	
 	foreach my $val ( @{$conf->{"order"}} ) {
-		
 		push( @line, join(", ", @{$store{$val}} ) );
 	}
 	
@@ -200,7 +197,7 @@ sub processConfFile {
 	
 	my $jsonStr = "";
 	
-	open ( FILE, "<:encoding(UTF-8)", $file) || die "Cannot open $file";
+	open ( FILE, "<", $file) || die "Cannot open $file";
 	
 
 	while ( <FILE> ) {
