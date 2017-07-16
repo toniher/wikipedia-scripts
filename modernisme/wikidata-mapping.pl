@@ -30,7 +30,7 @@ opendir( DIR, $dir ) or die $!;
 
 my $fork= new Parallel::ForkManager( $procs );
 
-open($fhout, ">", $fileout ) or die "Cannow write";
+open($fhout, ">:utf8", $fileout ) or die "Cannow write";
 
 while ( my $file = readdir(DIR) ) {
 	
@@ -95,7 +95,7 @@ sub processEntity {
 	
 	my %store;
 	
-	$store{"id"} = ( $entity->{"id"} );
+	push( @{$store{"id"}}, $entity->{"id"} );
 	
 	$store{"labelCa"} = ( );
 	$store{"descCa"} = ( );
@@ -106,13 +106,13 @@ sub processEntity {
 		
 		if ( defined( $entity->{"labels"}->{"ca"} ) ) {
 			if ( defined( $entity->{"labels"}->{"ca"}->{"value"} ) ) {
-				$store{"labelCa"} = ( $entity->{"labels"}->{"ca"}->{"value"} );
+				push( @{$store{"labelCa"}}, $entity->{"labels"}->{"ca"}->{"value"} );
 			}
 		}
 
 		if ( defined( $entity->{"labels"}->{"en"} ) ) {
 			if ( defined( $entity->{"labels"}->{"en"}->{"value"} ) ) {
-				$store{"labelEn"} = ( $entity->{"labels"}->{"en"}->{"value"} );
+				push( @{$store{"labelEn"}}, $entity->{"labels"}->{"en"}->{"value"} );
 			}
 		}
 	}
@@ -121,13 +121,13 @@ sub processEntity {
 		
 		if ( defined( $entity->{"descriptions"}->{"ca"} ) ) {
 			if ( defined( $entity->{"descriptions"}->{"ca"}->{"value"} ) ) {
-				$store{"descCa"} = ( $entity->{"descriptions"}->{"ca"}->{"value"} );
+				push( @{$store{"descCa"}}, $entity->{"descriptions"}->{"ca"}->{"value"} );
 			}
 		}
 
 		if ( defined( $entity->{"descriptions"}->{"en"} ) ) {
 			if ( defined( $entity->{"descriptions"}->{"en"}->{"value"} ) ) {
-				$store{"descEn"} = ( $entity->{"descriptions"}->{"en"}->{"value"} );
+				push( @{$store{"descEn"}}, $entity->{"descriptions"}->{"en"}->{"value"} );
 			}
 		}
 	}
