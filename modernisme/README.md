@@ -1,3 +1,7 @@
+python wikidata-get-IDs.py query.sparql
+
+perl wikidata-filter-id.pl allids listids.txt dirout
+
 perl wikidata-mapping.pl colleccions props.json colleccions.csv
 
 
