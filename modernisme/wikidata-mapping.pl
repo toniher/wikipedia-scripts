@@ -13,9 +13,11 @@ binmode(STDOUT, ":utf8");
 my $dir = shift;
 my $conffile = shift // "conf.json";
 my $fileout = shift // "filter.csv";
+my $qlist = shift // "qlist.txt";
 my $procs = shift // 4;
 
 my $conf = processConfFile( $conffile );
+my %qhash = {};
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
@@ -28,9 +30,9 @@ if ( ! -d $dirout ) {
 
 opendir( DIR, $dir ) or die $!;
 
-my $fork= new Parallel::ForkManager( $procs );
-
 open($fhout, ">:utf8", $fileout ) or die "Cannow write";
+
+my $fork= new Parallel::ForkManager( $procs );
 
 my @head = ();
 
@@ -61,10 +63,18 @@ while ( my $file = readdir(DIR) ) {
 }
 
 
+$fork->wait_all_children;
+
 close( $fhout );
 
+open($fhlout, ">:utf8", $qlist ) or die "Cannow write";
 
-$fork->wait_all_children;
+foreach my $val ( sort keys %qhash ) {
+	print $val, "\n";
+}
+
+close( $fhlout );
+
 
 sub processJSONfile {
 	
@@ -237,6 +247,7 @@ sub processQvalue {
 		
 			if ( $datavalue->{"value"}->{"entity-type"} eq 'item' ) {
 				$value =  $datavalue->{"value"}->{"id"};
+				$qhash{$value} = 1;
 			}
 		
 		} else {
