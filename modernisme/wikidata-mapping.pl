@@ -293,7 +293,7 @@ sub processInFile {
 		my (@split) = split(/\t/, $val, 2);
 		
 		if ( $split[1] ne '' ) {
-			$qhash{$split[0]} = $split[1];
+			$qhash{$split[0]} = "\"".$split[1]."\"";
 		}
 	}
 	
