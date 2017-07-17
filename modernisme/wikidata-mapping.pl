@@ -284,7 +284,7 @@ sub processInFile {
 	my $file = shift;
 	my %qhash;
 		
-	open ( FILE, "<", $file) || die "Cannot open $file";
+	open ( FILE, "<:encoding(UTF-8)", $file) || die "Cannot open $file";
 	
 
 	while ( <FILE> ) {
