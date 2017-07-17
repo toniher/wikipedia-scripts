@@ -17,6 +17,7 @@ my $procs = shift // 4;
 
 my %qhash = processInFile( $filein );
 
+print STDERR Dumper( \%qhash );
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
@@ -108,7 +109,8 @@ sub processEntity {
 			}
 	
 		}
-		
+
+        print STDERR $id."\t".$label."\n" ;		
 		$text = $id."\t".$label."\n" ;
 	
 	}
@@ -126,7 +128,7 @@ sub processInFile {
 	
 
 	while ( <FILE> ) {
-		my $id = $_=~/^(Q\d+)/;
+		my ( $id ) = $_=~/^(Q\d+)/;
 		$qhash{$id} = 1;
 	}
 	
