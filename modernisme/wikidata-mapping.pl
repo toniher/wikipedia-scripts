@@ -4,6 +4,7 @@ use 5.010;
 
 use JSON;
 use Parallel::ForkManager;
+use Text::Trim;
 use Data::Dumper;
 
 use utf8;
@@ -17,7 +18,8 @@ my $qlist = shift // "qlist.txt";
 my $procs = shift // 4;
 
 my $conf = processConfFile( $conffile );
-my %qhash;
+
+my %qhash = processInFile( $qlist );
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
@@ -241,6 +243,9 @@ sub processQvalue {
 
 				if ( $datavalue->{"value"}->{"id"} =~ /^Q/ ) {
 			        $value = $datavalue->{"value"}->{"id"};
+					if ( defined( $qhash{ $value } ) ) {
+						$value = $qhash{ $value };
+					}
                 }
 			}
 		
@@ -274,3 +279,27 @@ sub processQvalue {
 	
 }
 
+sub processInFile {
+	
+	my $file = shift;
+	my %qhash;
+		
+	open ( FILE, "<", $file) || die "Cannot open $file";
+	
+
+	while ( <FILE> ) {
+		
+		my $val = trim( $_ );
+		my (@split) = split(/\t/, $val, 2);
+		
+		if ( $split[1] ne '' ) {
+			$qhash{$split[0]} = $split[1];
+		}
+	}
+	
+	close( FILE );
+
+	
+	return %qhash;
+	
+}

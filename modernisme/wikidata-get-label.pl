@@ -17,8 +17,6 @@ my $procs = shift // 4;
 
 my %qhash = processInFile( $filein );
 
-print STDERR Dumper( \%qhash );
-
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
 	exit;
@@ -110,7 +108,6 @@ sub processEntity {
 	
 		}
 
-        print STDERR $id."\t".$label."\n" ;		
 		$text = $id."\t".$label."\n" ;
 	
 	}

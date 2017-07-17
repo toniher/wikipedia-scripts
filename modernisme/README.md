@@ -15,6 +15,9 @@ cat *qlist.txt | sort -u > all.qlist.txt
 # Get back Ids
 perl wikidata-filter-id.pl ../../wikidata/parts all.qlist.txt qlist
 
+# Corresp of Ids
+perl wikidata-get-label.pl qlist all.qlist.txt corresp.qlist.txt
+
 
 # Counting IDs
 less *.json |grep '\"id\":'|wc -l
