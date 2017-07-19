@@ -30,3 +30,14 @@ perl wikidata-get-label.pl qlist all.qlist.txt corresp.qlist.txt
 * Counting IDs
 
 less *.json |grep '\"id\":'|wc -l
+
+* Getting columns and filtering Q
+ cut -f9 all.20170719.csv |sort -u > instancia-de.txt
+
+perl -lane 'my (@case) = $_=~/\«(\S.*?)\»/gimsx; foreach my $ca (@case) { print $ca}' instancia-de.txt | sort -u >  instancia-de.tot.txt
+perl -lane 'my (@case) = $_=~/(Q\d+?)\b/gimsx; foreach my $ca (@case) { print $ca}' instancia-de.txt | sort -u >  instancia-q.tot.txt
+
+
+
+
+
