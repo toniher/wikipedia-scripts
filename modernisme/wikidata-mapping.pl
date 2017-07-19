@@ -14,12 +14,17 @@ binmode(STDOUT, ":utf8");
 my $dir = shift;
 my $conffile = shift // "conf.json";
 my $fileout = shift // "filter.csv";
-my $qlist = shift // "qlist.txt";
+my $qlist = shift // 0;
 my $procs = shift // 4;
 
 my $conf = processConfFile( $conffile );
+my %qhash;
 
-my %qhash = processInFile( $qlist );
+if ( $qlist ) {
+
+	%qhash = processInFile( $qlist );
+
+}
 
 # Directory with Wikidata pieces
 if ( ! defined( $dir ) ) {
