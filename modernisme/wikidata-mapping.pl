@@ -38,6 +38,8 @@ if ( ! -d $dirout ) {
 opendir( DIR, $dir ) or die $!;
 
 open($fhout, ">:utf8", $fileout ) or die "Cannow write";
+open($fhmapout, ">:utf8", $fileout.".map.csv" ) or die "Cannow write";
+
 
 my $fork= new Parallel::ForkManager( $procs );
 
@@ -62,8 +64,11 @@ while ( my $file = readdir(DIR) ) {
 
 	my $content = &processJSONfile( $dir."/".$file );
 	
-	if ( $content ne '' ) {
-		print $fhout $content;
+	if ( $content->{"default"} ne '' ) {
+		print $fhout $content->{"default"};
+	}
+	if ( $content->{"map"} ne '' ) {
+		print $fhmapout $content->{"map"};
 	}
 	
 	$fork->finish;
@@ -73,11 +78,14 @@ while ( my $file = readdir(DIR) ) {
 $fork->wait_all_children;
 
 close( $fhout );
+close( $fhmapout );
 
 sub processJSONfile {
 	
 	my $file = shift;
-	my $text = "";
+	my $content;
+	$content->{"default"} = "";
+	$content->{"map"} = "";
 
 	# Process JSON file
 	# Line by line is a JSON piece
@@ -88,22 +96,28 @@ sub processJSONfile {
 	while ( <FILE> ) {
 		
 		my $entityStr = $_;
-		my $pre = $_;
 	
 		# Remove final comma
 		$entityStr=~s/\,\s*$//g;
-		my $entity = JSON->new->utf8(1)->decode($entityStr);
-		
-		my $doc;
-		
+		my $entity = JSON->new->utf8(1)->decode($entityStr);		
 
-		$text.= processEntity( $entity );
+		my %store = processEntity( $entity );
+
+		my @linedef = ();
+		my @linemap = ();
 		
+		foreach my $val ( @{$conf->{"order"}} ) {
+			push( @linedef, join(", ", @{$store{$val}} ) );
+		}
+		
+		$content->{"default"} = $content->{"default"} . join( "\t", @linedef )."\n" ;
+		$content->{"map"} = $content->{"map"} . join( "\t", @linemap )."\n" ;
+
 	}                             
 	
 	close( FILE );
 	
-	return $text;
+	return $content;
 }
 
 
@@ -202,13 +216,7 @@ sub processEntity {
 		
 	}
 
-	my @line = ();
-	
-	foreach my $val ( @{$conf->{"order"}} ) {
-		push( @line, join(", ", @{$store{$val}} ) );
-	}
-	
-	return join( "\t", @line )."\n" ;
+	return %store;
 	
 }
 
