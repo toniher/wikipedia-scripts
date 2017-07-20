@@ -55,6 +55,14 @@ foreach my $val ( @{$conf->{"order"}} ) {
 
 print $fhout join("\t", @head), "\n";
 
+my @headmap = ();
+
+foreach my $val ( @{$conf->{"ordermap"}} ) {
+	push( @headmap, $val );
+}
+
+print $fhmapout join("\t", @headmap), "\n";
+
 while ( my $file = readdir(DIR) ) {
 	
 	if ( $file=~/^\./ ) { next; }
@@ -109,6 +117,34 @@ sub processJSONfile {
 		foreach my $val ( @{$conf->{"order"}} ) {
 			push( @linedef, join(", ", @{$store{$val}} ) );
 		}
+		
+		foreach my $val ( @{$conf->{"ordermap"}} ) {
+			
+			if ( defined( $conf->{"map"}->{$val} ) ) {
+			
+				my @field;
+				my @list = @{ $conf->{"map"}->{$val} };
+				
+				# print STDERR $val, "\n";
+				
+				foreach my $el ( @list ) {
+					
+					# print STDERR "\t".$el."\n";
+					
+					if ($#{$store{$el}} >= 0 ) {
+						# print STDERR Dumper( $store{$el} )."\n";
+						push( @field, join( ", ", @{$store{$el}} ) );
+					}
+				}
+			
+				
+				push( @linemap, join(", ", uniq( @field ) ) );
+
+			}
+			
+
+		}
+		
 		
 		$content->{"default"} = $content->{"default"} . join( "\t", @linedef )."\n" ;
 		$content->{"map"} = $content->{"map"} . join( "\t", @linemap )."\n" ;
@@ -315,4 +351,10 @@ sub processInFile {
 	
 	return %qhash;
 	
+}
+
+
+sub uniq {
+	my %seen;
+	return grep { !$seen{$_}++ } @_;
 }
