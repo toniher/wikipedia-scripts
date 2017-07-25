@@ -37,7 +37,9 @@ less *.json |grep '\"id\":'|wc -l
 perl -lane 'my (@case) = $_=~/\«(\S.*?)\»/gimsx; foreach my $ca (@case) { print $ca}' instancia-de.txt | sort -u >  instancia-de.tot.txt
 perl -lane 'my (@case) = $_=~/(Q\d+?)\b/gimsx; foreach my $ca (@case) { print $ca}' instancia-de.txt | sort -u >  instancia-q.tot.txt
 
+* Remove excluded IDs
 
+comm -3 all-pre.txt exclude-ids.txt > all.txt
 
 
 
