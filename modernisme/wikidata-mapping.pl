@@ -38,7 +38,11 @@ if ( ! -d $dirout ) {
 opendir( DIR, $dir ) or die $!;
 
 open($fhout, ">:utf8", $fileout ) or die "Cannow write";
-open($fhmapout, ">:utf8", $fileout.".map.csv" ) or die "Cannow write";
+
+my $filemap = $fileout;
+$filemap=~s/\.csv//g;
+
+open($fhmapout, ">:utf8", $filemap.".map.csv" ) or die "Cannow write";
 
 
 my $fork= new Parallel::ForkManager( $procs );
@@ -133,7 +137,14 @@ sub processJSONfile {
 					
 					if ($#{$store{$el}} >= 0 ) {
 						# print STDERR Dumper( $store{$el} )."\n";
-						push( @field, join( ", ", @{$store{$el}} ) );
+						
+						my (@values) = @{$store{$el}};
+						
+						if ( $val eq "Tipus d'obra" ) {
+							@values = mapTaxonomy( @values );
+						}
+						
+						push( @field, join( ", ", @values ) );
 					}
 				}
 			
@@ -351,6 +362,26 @@ sub processInFile {
 	
 	return %qhash;
 	
+}
+
+sub mapTaxonomy {
+	
+	my @values = shift;
+	my @nvalues;
+	
+	foreach my $value ( @values ) {
+		
+		$value =~s/«//g;
+		$value =~s/»//g;
+
+		$value = lc( $value );
+		
+		push( @nvalues, "«".$conf->{"taxonomy"}->{$value}."»" );
+		
+	}
+	
+	
+	return @nvalues;
 }
 
 
