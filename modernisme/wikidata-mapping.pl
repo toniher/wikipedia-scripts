@@ -376,7 +376,11 @@ sub mapTaxonomy {
 
 		$value = lc( $value );
 		
-		push( @nvalues, "«".$conf->{"taxonomy"}->{$value}."»" );
+		if ( defined( $conf->{"taxonomy"}->{$value} ) ) {
+			$value = "«".$conf->{"taxonomy"}->{$value}."»";
+		}
+		
+		push( @nvalues, $value );
 		
 	}
 	
