@@ -39,6 +39,7 @@
 	],
 	"map": {
 		"Wikidata": [ "id" ],
+        "Etiqueta": [ "labelCa" ],
 		"Títol": [ "P1476" ],
 		"Imatge": [ "P18" ],
 		"Tipus d'obra": [ "P31" ],
@@ -55,7 +56,7 @@
 		"Profunditat": [ "P2043" ],
 		"Obra relacionada amb": [ "P361", "P527" ]
 	},
-	"ordermap": [ "Wikidata", "Títol", "Imatge", "Tipus d'obra", "Número Inventari", "Autor", "Data", "Col·lecció", "Localització", "Adreça",
+	"ordermap": [ "Wikidata", "Etiqueta", "Títol", "Imatge", "Tipus d'obra", "Número Inventari", "Autor", "Data", "Col·lecció", "Localització", "Adreça",
 				 "Material/Tècnica", "Descripció", "Alçada", "Amplada", "Profunditat", "Obra relacionada amb" ],
 	"taxonomy": {
 		"abric": "Vestuari i altres peces de vestit",
