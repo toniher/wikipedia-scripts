@@ -378,6 +378,8 @@ sub mapTaxonomy {
 		
 		if ( defined( $conf->{"taxonomy"}->{$value} ) ) {
 			$value = "«".$conf->{"taxonomy"}->{$value}."»";
+		} else {
+			$value = "@".$value;	
 		}
 		
 		push( @nvalues, $value );
