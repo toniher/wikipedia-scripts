@@ -54,7 +54,7 @@ foreach my $key ( @keys ) {
 	
 }
 
-sub procesFile  {
+sub processFile  {
 	
 	my $fils = shift;
 	my $map = shift;
