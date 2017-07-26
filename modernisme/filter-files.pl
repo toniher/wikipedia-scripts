@@ -24,6 +24,13 @@ foreach my $key ( @keys ) {
 	my $finkey = $key;
 	$finkey =~ s/\s/_/g;
 	$finkey =~ s/\'//g;
+	$finkey =~ s/«//g;
+	$finkey =~ s/»//g;
+
+	if ( $finkey eq '' ) {
+		$finkey = "sensetaxonomia";
+	}
+	
 	
 	open( FILEOUT, ">".$dirout."/".$fileout.".".$finkey.".csv" );
 	
