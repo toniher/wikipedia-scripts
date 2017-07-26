@@ -70,11 +70,17 @@ sub processFile  {
 	
 	open( FILE, $file );
 	
+	my $iter = 0;
+	
 	while (<FILE>) {
 		
-		my @split = split( /\t/, $_ );
+		if ( $iter > 0 ) {
+			my @split = split( /\t/, $_ );
 		
-		push( @arr, $split[$map] );
+			push( @arr, $split[$map] );
+		}
+		
+		$iter++;
 		
 	}
 	
