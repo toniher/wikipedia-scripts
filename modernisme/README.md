@@ -10,6 +10,10 @@ perl wikidata-filter-id.pl allids listids.txt dirout
 
 perl wikidata-mapping.pl colleccions props.json colleccions.csv
 
+* Perform the mapping with corresp of Q (export CSV)
+
+perl wikidata-mapping.pl colleccions props.json colleccions.csv corresp.qlist.txt
+
 * Retrive all Qs
 
 perl -lane 'my (@case) = $_=~/(Q\d+)/gimsx; foreach my $ca (@case) { print $ca}' test.c.txt > qlist.txt

@@ -6,9 +6,11 @@ use JSON;
 use Parallel::ForkManager;
 use Text::Trim;
 use Data::Dumper;
-
+use Digest::MD5 qw(md5_hex);
+use Encode;
 use utf8;
 binmode(STDOUT, ":utf8");
+binmode(STDERR, ":utf8");
 
 # Directory of dumps
 my $dir = shift;
@@ -142,6 +144,10 @@ sub processJSONfile {
 						
 						if ( $val eq "Tipus d'obra" ) {
 							@values = mapTaxonomy( @values );
+						}
+						
+						if ( $val eq "Imatge" ) {
+							@values = mapCommonsImage( @values );
 						}
 						
 						push( @field, join( ", ", @values ) );
@@ -383,6 +389,34 @@ sub mapTaxonomy {
 		}
 		
 		push( @nvalues, $value );
+		
+	}
+	
+	
+	return @nvalues;
+}
+
+sub mapCommonsImage {
+	
+	my @values = shift;
+	my @nvalues;
+	
+	foreach my $value ( @values ) {
+		
+		$value =~s/«//g;
+		$value =~s/»//g;
+		$value =~s/"//g;
+		$value =~s/\s/_/g;
+		
+		my $md5 = md5_hex( Encode::encode_utf8( $value ) );
+
+		my ($part2) = $md5 =~/^(\S{2})/;
+		my ($part1) = $md5 =~/^(\S{1})/;
+		
+		
+		my $url = "https://upload.wikimedia.org/wikipedia/commons/$part1/$part2/$value";
+		
+		push( @nvalues, $url );
 		
 	}
 	
