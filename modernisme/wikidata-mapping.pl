@@ -248,7 +248,7 @@ sub processEntity {
 								
 									my $datavalue = $mainsnak->{"datavalue"};
 									
-									my $value = processQvalue( $datavalue, $entity->{"id"} );
+									my $value = processQvalue( $datavalue, $entity->{"id"}, $conf );
 									
 									if ( $value ) {
 										
@@ -299,7 +299,9 @@ sub processQvalue {
 	
 	my $datavalue = shift;
     my $ref = shift;
+	my $conf = shift;
 	my $value = 0;
+	
 	
 	if ( defined( $datavalue->{"value"} ) ) {
 		
@@ -334,7 +336,47 @@ sub processQvalue {
 					}
 					
 					
-				}		
+				}
+				
+				if ( $datavalue->{"type"} eq 'monolingualtext' ) {
+					if ( defined( $datavalue->{"value"}->{"text"} ) ) {
+						$value =  "\"".$datavalue->{"value"}->{"text"}."\"";
+					}
+				}
+				
+				if ( $datavalue->{"type"} eq 'time' ) {
+					if ( defined( $datavalue->{"value"}->{"time"} ) ) {
+						
+						# In this case makes no sense save time. Further config in future
+						# TODO: Also add qualifiers! https://www.wikidata.org/wiki/Q30881157
+						my ($time) = $datavalue->{"value"}->{"time"} =~/(\d\S+)T/;
+						my $precision = $datavalue->{"value"}->{"precision"};
+						print STDERR $time, " - ", $precision, "\n";
+						
+						$value =  "\"".$time."\"";
+					}
+				}
+				
+				if ( $datavalue->{"type"} eq 'quantity' ) {
+					if ( defined( $datavalue->{"value"}->{"amount"} ) ) {
+						
+						my $amount = $datavalue->{"value"}->{"amount"};
+						$amount =~s/\+\s*//g;
+						
+						my $unit = $datavalue->{"value"}->{"unit"};
+						my ($qunit) = $unit=~/(Q\d+)/;
+						
+						if ( defined( $qunit ) && defined( $conf->{"unit"} ) ){
+							if ( defined( $conf->{"unit"}->{$qunit} ) ) {
+								
+								$qunit = $conf->{"unit"}->{$qunit};
+								
+							}
+						}
+						
+						$value =  "\"".$amount." $qunit\"";
+					}
+				}				
 				
 			}
 			
