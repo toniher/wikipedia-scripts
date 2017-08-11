@@ -269,10 +269,13 @@ sub processEntity {
 				}
 				
 			}
+
+			# TODO: Retrieve qualifiers and handle here as well
 			
 		}
 		
 	}
+
 
 	return %store;
 	
@@ -303,7 +306,7 @@ sub processConfFile {
 sub processQvalue {
 	
 	my $datavalue = shift;
-    my $ref = shift;
+    	my $ref = shift;
 	my $qualifiers = shift;
 	my $conf = shift;
 	my $value = 0;
