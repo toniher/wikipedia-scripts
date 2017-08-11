@@ -240,6 +240,11 @@ sub processEntity {
 					foreach my $propAss (  @{$snaks} ) {
 						my $mainsnak = $propAss->{"mainsnak"};
 						
+						my $qualifiers = 0;
+						if ( defined( $propAss->{"qualifiers"} ) ) {
+							$qualifiers = $propAss->{"qualifiers"};
+						}
+						
 						if ( defined( $mainsnak->{"snaktype"} ) ) {
 							
 							if ( $mainsnak->{"snaktype"} eq 'value' ) {
@@ -248,7 +253,7 @@ sub processEntity {
 								
 									my $datavalue = $mainsnak->{"datavalue"};
 									
-									my $value = processQvalue( $datavalue, $entity->{"id"}, $conf );
+									my $value = processQvalue( $datavalue, $entity->{"id"}, $qualifiers, $conf );
 									
 									if ( $value ) {
 										
@@ -299,6 +304,7 @@ sub processQvalue {
 	
 	my $datavalue = shift;
     my $ref = shift;
+	my $qualifiers = shift;
 	my $conf = shift;
 	my $value = 0;
 	
@@ -347,11 +353,10 @@ sub processQvalue {
 				if ( $datavalue->{"type"} eq 'time' ) {
 					if ( defined( $datavalue->{"value"}->{"time"} ) ) {
 						
-						# In this case makes no sense save time. Further config in future
-						# TODO: Also add qualifiers! https://www.wikidata.org/wiki/Q30881157
 						my ($time) = $datavalue->{"value"}->{"time"} =~/(\d\S+)T/;
 						my $precision = $datavalue->{"value"}->{"precision"};
-						print STDERR $time, " - ", $precision, "\n";
+						
+						$time = processTime( $time, $precision, $qualifiers );
 						
 						$value =  "\"".$time."\"";
 					}
@@ -385,6 +390,146 @@ sub processQvalue {
 	
 	return $value;
 	
+}
+
+sub processTime {
+	
+	my $time = shift;
+	my $precision = shift;
+	my $qualifiers = shift;
+	
+	if ( $precision < 11 ) {
+		
+		if ( $precision == 10 ) {
+			my ( $yearmonth ) = $time =~ /^(\d+\-\d+)\-/;
+			$time = $yearmonth;
+		}
+		
+		if ( $precision == 9 ) {
+			my ( $year ) = $time =~ /^(\d+)/;
+			$time = $year;
+		}
+		
+		if ( $precision < 9 ) {
+			
+			if ( $precision == 8 ) {
+			
+				my ( $year ) = $time =~ /^(\d+)/;
+				$time = "decada ".$year."s";
+
+				if ( $qualifiers ) {
+					$time = processTimeQualifiers( $time, $qualifiers );
+				}
+				
+				
+			}
+			
+			if ( $precision == 7 ) {
+
+				my ( $year ) = $time =~ /^(\d+)/;
+				$year=~s/00//g;
+				$time = "segle ".$year;	
+
+				if ( $qualifiers ) {
+					$time = processTimeQualifiers( $time, $qualifiers );	
+				}
+
+				
+			}
+			
+			if ( $precision == 6 ) {
+
+				my ( $year ) = $time =~ /^(\d)/;
+				#$time = "mil·leni ".$year;
+				$time = "";	
+
+				if ( $qualifiers ) {
+					$time = processTimeQualifiers( $time, $qualifiers );
+				}
+				
+			}		
+
+		}
+	}
+	
+	return $time;
+	
+}
+
+sub processTimeQualifiers {
+	
+	my $time = shift;
+	my $qualifiers = shift;
+
+	if ( $qualifiers ) {
+		
+
+		foreach my $key ( keys %{$qualifiers} ) {
+	
+			my $qualifier = $qualifiers->{$key};
+
+			my $timeq;
+			my $precisionq;
+
+			foreach my $qval ( @{$qualifier} ) {
+
+				if ( $qval->{"datatype"} ) {
+					if ( $qval->{"datatype"} eq "time" ) {
+
+						if ( $qval->{"datavalue"} ) {
+
+							if ( $qval->{"datavalue"}->{"value"} ) {
+
+								( $timeq ) = $qval->{"datavalue"}->{"value"}->{"time"} =~/(\d\S+)T/;
+								$precisionq = $qval->{"datavalue"}->{"value"}->{"precision"};
+								$timeq = processTime( $timeq, $precisionq, 0 );
+
+							}
+						}
+					}
+				}
+			}
+		
+			if ( $key eq 'P1480' ) {
+				
+				# Get qualif time
+				$time = "ca. ". $time;
+				
+			}
+			
+			if ( $key eq 'P1326' ) {
+				
+				# Get qualif time
+				$time = $time."; abans de ".$timeq;
+				
+			}		
+			if ( $key eq 'P1319' ) {
+				
+				# Get qualif time
+				$time = $time."; després de ".$timeq;
+				
+			}
+			
+			if ( $key eq 'P580' ) {
+				
+				# Get qualif time
+				$time = $time."; inici ".$timeq;
+				
+			}
+			
+			if ( $key eq 'P582' ) {
+				
+				# Get qualif time
+				$time = $time."; final ".$timeq;
+				
+			}	
+		}
+	
+	}
+	
+	#print STDERR $time, "\n";
+
+	return $time;
 }
 
 sub processInFile {
