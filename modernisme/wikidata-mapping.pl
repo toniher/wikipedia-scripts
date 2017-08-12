@@ -219,24 +219,32 @@ sub processEntity {
 		}
 	}
 	
-	if ( defined( $conf->{"props"} ) ) {
-				
-		foreach my $prop ( keys %{ $conf->{"props"} } ) {
-
-			if ( ! defined( $store{$prop} ) ) {
-				$store{$prop} = ();
-			}
+	my @allqualifiers;
+	my $claims = 0;
 	
-			if ( defined( $entity->{"claims"} ) ) {
-				
-				$claims = $entity->{"claims"};
-				
+	if ( defined( $entity->{"claims"} ) ) {
+	
+		$claims = $entity->{"claims"};
+		# TODO: Retrieve qualifiers and handle here as well
+		@allqualifiers = getAllQualifiers( $claims );
+	}
+	
+	if ( defined( $claims ) ) {
+	
+		if ( defined( $conf->{"props"} ) ) {
+					
+			foreach my $prop ( keys %{ $conf->{"props"} } ) {
+	
+				if ( ! defined( $store{$prop} ) ) {
+					$store{$prop} = ();
+				}
+					
 				# Exists pro
 				if ( defined( $claims->{$prop} ) ) {
 										
 					my $snaks = $claims->{$prop};
 				
-
+	
 					foreach my $propAss (  @{$snaks} ) {
 						my $mainsnak = $propAss->{"mainsnak"};
 						
@@ -268,17 +276,82 @@ sub processEntity {
 					
 				}
 				
-			}
+				my @propQualifiers = getQualifiersWithProp( \@allqualifiers, $prop );
+				
+				foreach my $snaks ( @propQualifiers ) {
+									
+					foreach my $snak (  @{$snaks} ) {
+	
+						if ( defined( $snak->{"snaktype"} ) ) {
+							
+							if ( $snak->{"snaktype"} eq 'value' ) {
+								
+								if ( defined( $snak->{"datavalue"} ) ) {
+								
+									my $datavalue = $snak->{"datavalue"};
+									
+									my $value = processQvalue( $datavalue, $entity->{"id"}, 0, $conf );
+									
+									if ( $value ) {
+										
+										push( @{$store{$prop} }, $value );
+										
+									}
+									
+								}
+							}
+						}
+					}
+				}
 
-			# TODO: Retrieve qualifiers and handle here as well
+			}
 			
 		}
-		
+	
 	}
-
 
 	return %store;
 	
+}
+
+sub getAllQualifiers {
+	
+	my $claims = shift;
+	my @qualifiers;
+	
+	foreach my $prop ( keys %{ $claims } ) {
+		
+		my $claim = $claims->{$prop};
+		
+		if ( defined( $claim->{"qualifiers"} ) ) {
+			push( @qualifiers, $claim->{"qualifiers"} );
+		}
+		
+	}
+	
+	return @qualifiers;
+}
+
+sub getQualifiersWithProp {
+	
+	my $qualifiersList = shift;
+	my $prop = shift;
+	my @qualifiersProp;
+	
+	foreach my $qualifiers ( @{$qualifiersList} ) {
+	
+		foreach my $key ( keys %{ $qualifiers } ) {
+			
+	
+			if ( $key eq $prop ) {
+				push( @qualifiersProp, $qualifiers->{$prop} );
+				
+			}
+			
+		}
+	}
+	
+	return @qualifiersProp;
 }
 
 sub processConfFile {
