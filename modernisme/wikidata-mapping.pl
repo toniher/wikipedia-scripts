@@ -261,7 +261,7 @@ sub processEntity {
 								
 									my $datavalue = $mainsnak->{"datavalue"};
 									
-									my $value = processQvalue( $datavalue, $entity->{"id"}, $qualifiers, $conf );
+									my $value = processQvalue( $datavalue, $entity->{"id"}, $qualifiers, $conf, 0 );
 									
 									if ( $value ) {
 										
@@ -290,7 +290,7 @@ sub processEntity {
 								
 									my $datavalue = $snak->{"datavalue"};
 									
-									my $value = processQvalue( $datavalue, $entity->{"id"}, 0, $conf );
+									my $value = processQvalue( $datavalue, $entity->{"id"}, 0, $conf, 1 );
 									
 									if ( $value ) {
 										
@@ -382,9 +382,17 @@ sub processConfFile {
 sub processQvalue {
 	
 	my $datavalue = shift;
-    	my $ref = shift;
+    my $ref = shift;
 	my $qualifiers = shift;
 	my $conf = shift;
+	
+	my $qualcontext;
+	
+	if ( $qualcontext ) {
+		
+		print STDERR $datavalue, "\n";
+	}
+	
 	my $value = 0;
 	
 	
