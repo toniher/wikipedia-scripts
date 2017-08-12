@@ -390,7 +390,8 @@ sub processQvalue {
 	
 	if ( $qualcontext ) {
 		
-		print STDERR Dumper( $datavalue ), "\n";
+		# Can be used for debugging, etc.
+		#print STDERR Dumper( $datavalue ), "\n";
 	}
 	
 	my $value = 0;
