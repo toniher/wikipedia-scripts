@@ -193,13 +193,13 @@ sub processEntity {
 		
 		if ( defined( $entity->{"labels"}->{"ca"} ) ) {
 			if ( defined( $entity->{"labels"}->{"ca"}->{"value"} ) ) {
-				push( @{$store{"labelCa"}}, $entity->{"labels"}->{"ca"}->{"value"} );
+				push( @{$store{"labelCa"}}, "\"".escapeQuotes($entity->{"labels"}->{"ca"}->{"value"})."\"" );
 			}
 		}
 
 		if ( defined( $entity->{"labels"}->{"en"} ) ) {
 			if ( defined( $entity->{"labels"}->{"en"}->{"value"} ) ) {
-				push( @{$store{"labelEn"}}, $entity->{"labels"}->{"en"}->{"value"} );
+				push( @{$store{"labelEn"}}, "\"".escapeQuotes($entity->{"labels"}->{"en"}->{"value"})."\"" );
 			}
 		}
 	}
@@ -208,13 +208,13 @@ sub processEntity {
 		
 		if ( defined( $entity->{"descriptions"}->{"ca"} ) ) {
 			if ( defined( $entity->{"descriptions"}->{"ca"}->{"value"} ) ) {
-				push( @{$store{"descCa"}}, $entity->{"descriptions"}->{"ca"}->{"value"} );
+				push( @{$store{"descCa"}}, "\"".escapeQuotes($entity->{"descriptions"}->{"ca"}->{"value"})."\"" );
 			}
 		}
 
 		if ( defined( $entity->{"descriptions"}->{"en"} ) ) {
 			if ( defined( $entity->{"descriptions"}->{"en"}->{"value"} ) ) {
-				push( @{$store{"descEn"}}, $entity->{"descriptions"}->{"en"}->{"value"} );
+				push( @{$store{"descEn"}}, "\"".escapeQuotes($entity->{"descriptions"}->{"en"}->{"value"})."\"" );
 			}
 		}
 	}
@@ -406,7 +406,7 @@ sub processQvalue {
 			if ( defined( $datavalue->{"type"} ) ) {
 				
 				if ( $datavalue->{"type"} eq 'string' ) {
-					$value =  "\"".$datavalue->{"value"}."\"";
+					$value =  "\"".escapeQuotes( $datavalue->{"value"} )."\"";
 				}
 				
 				if ( $datavalue->{"type"} eq 'globecoordinate' ) {
@@ -425,7 +425,7 @@ sub processQvalue {
 				
 				if ( $datavalue->{"type"} eq 'monolingualtext' ) {
 					if ( defined( $datavalue->{"value"}->{"text"} ) ) {
-						$value =  "\"".$datavalue->{"value"}->{"text"}."\"";
+						$value =  "\"".escapeQuotes( $datavalue->{"value"}->{"text"} )."\"";
 					}
 				}
 				
@@ -579,12 +579,18 @@ sub processTimeQualifiers {
 			if ( $key eq 'P1326' ) {
 				
 				# Get qualif time
-				$time = $time."; abans de ".$timeq;
+				if ( $time ne '') {
+					$time = "; ";
+				} 
+				$time = $time."abans de ".$timeq;
 				
 			}		
 			if ( $key eq 'P1319' ) {
 				
 				# Get qualif time
+				if ( $time ne '') {
+					$time = "; ";
+				} 
 				$time = $time."; després de ".$timeq;
 				
 			}
@@ -592,6 +598,9 @@ sub processTimeQualifiers {
 			if ( $key eq 'P580' ) {
 				
 				# Get qualif time
+				if ( $time ne '') {
+					$time = "; ";
+				} 
 				$time = $time."; inici ".$timeq;
 				
 			}
@@ -599,6 +608,9 @@ sub processTimeQualifiers {
 			if ( $key eq 'P582' ) {
 				
 				# Get qualif time
+				if ( $time ne '') {
+					$time = "; ";
+				} 
 				$time = $time."; final ".$timeq;
 				
 			}	
@@ -688,6 +700,16 @@ sub mapCommonsImage {
 	
 	
 	return @nvalues;
+}
+
+sub escapeQuotes {
+	
+	my $string = shift;
+	
+	
+	$string =~ s/\"/\\\"/g;
+	
+	return $string;
 }
 
 
