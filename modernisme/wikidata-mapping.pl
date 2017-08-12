@@ -386,11 +386,11 @@ sub processQvalue {
 	my $qualifiers = shift;
 	my $conf = shift;
 	
-	my $qualcontext;
+	my $qualcontext = shift;
 	
 	if ( $qualcontext ) {
 		
-		print STDERR $datavalue, "\n";
+		print STDERR Dumper( $datavalue ), "\n";
 	}
 	
 	my $value = 0;
