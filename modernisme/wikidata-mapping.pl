@@ -321,12 +321,15 @@ sub getAllQualifiers {
 	
 	foreach my $prop ( keys %{ $claims } ) {
 		
-		my $claim = $claims->{$prop};
+		my $snaks = $claims->{$prop};
+				
+		foreach my $propAss (  @{$snaks} ) {
+			
+			if ( defined( $propAss->{"qualifiers"} ) ) {
+				push( @qualifiers, $propAss->{"qualifiers"} );
+			}
 		
-		if ( defined( $claim->{"qualifiers"} ) ) {
-			push( @qualifiers, $claim->{"qualifiers"} );
 		}
-		
 	}
 	
 	return @qualifiers;
