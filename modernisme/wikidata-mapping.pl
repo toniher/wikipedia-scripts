@@ -150,7 +150,7 @@ sub processJSONfile {
 							@values = mapCommonsImage( @values );
 						}
 						
-						push( @field, join( ", ", @values ) );
+						push( @field, join( ", ", uniq( @values ) ) );
 					}
 				}
 			
