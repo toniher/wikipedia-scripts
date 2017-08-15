@@ -589,7 +589,7 @@ sub processTimeQualifiers {
 				
 				# Get qualif time
 				if ( $time ne '') {
-					$time = "; ";
+					$time = $time. "; ";
 				} 
 				$time = $time."abans de ".$timeq;
 				
@@ -598,30 +598,27 @@ sub processTimeQualifiers {
 				
 				# Get qualif time
 				if ( $time ne '') {
-					$time = "; ";
+					$time = $time. "; ";
 				} 
-				$time = $time."; després de ".$timeq;
-				
+				$time = $time."després de ".$timeq;
 			}
 			
 			if ( $key eq 'P580' ) {
 				
 				# Get qualif time
 				if ( $time ne '') {
-					$time = "; ";
+					$time = $time. "; ";
 				} 
-				$time = $time."; inici ".$timeq;
-				
+				$time = $time."inici ".$timeq;
 			}
 			
 			if ( $key eq 'P582' ) {
 				
 				# Get qualif time
 				if ( $time ne '') {
-					$time = "; ";
+					$time = $time. "; ";
 				} 
-				$time = $time."; final ".$timeq;
-				
+				$time = $time."final ".$timeq;
 			}	
 		}
 	
