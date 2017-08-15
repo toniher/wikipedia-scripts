@@ -48,8 +48,9 @@
 		"Número Inventari": [ "P217", "P528", "P808", "P972", "P1600" ],
 		"Autor": [ "P84", "P170", "P287", "P465", "P767", "P1773", "P1774", "P1779", "P176", "P123" ],
 		"Data": [ "P571" ],
-		"Col·lecció": [ "P127", "P131", "P195", "P276" ],
-		"Localització": [ "P625" ],
+		"Col·lecció": [ "P127", "P195", "P276" ],
+        "Població": [ "P131" ],
+		"Coordenades": [ "P625" ],
 		"Adreça": [ "P969" ],
 		"Material/Tècnica": [ "P186" ],
 		"Descripció": [ "P180", "P1343" ],
@@ -58,7 +59,7 @@
 		"Profunditat": [ "P2043" ],
 		"Obra relacionada amb": [ "P361", "P527" ]
 	},
-	"ordermap": [ "Wikidata", "Etiqueta", "Títol", "Imatge", "Tipus d'obra", "Número Inventari", "Autor", "Data", "Col·lecció", "Localització", "Adreça",
+	"ordermap": [ "Wikidata", "Etiqueta", "Títol", "Imatge", "Tipus d'obra", "Número Inventari", "Autor", "Data", "Col·lecció", "Població", "Coordenades", "Adreça",
 				 "Material/Tècnica", "Descripció", "Alçada", "Amplada", "Profunditat", "Obra relacionada amb" ],
 	"unit": {
 		"Q11573": "m",
