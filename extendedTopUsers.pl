@@ -1,5 +1,6 @@
-#!/usr/bin/env perl -w
- 
+#!/usr/bin/env perl
+
+use warnings;
 use MediaWiki::API;
 use LWP::Simple qw(get);
 use JSON qw(from_json);
