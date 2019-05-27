@@ -176,15 +176,21 @@ sub get_pagecount {
  
 	my $entry = shift;
 	my $lang = shift // "en";
-	my $date = "201501"; # TODO: Generate from current date
+	my $dates = "2019040100"; # TODO: Generate from current date
+	my $datee = "2019050100"; # TODO: Generate from current date
+
 	
-	my $url = "http://stats.grok.se/json/$lang/$date/".$entry;
+	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/$entry/monthly/$dates/$datee";
 
 	my $jsonobj = from_json(full_get($url)); 
 	
 	if ( $jsonobj ) {
 	
-		my $count_total = avg_values ( $jsonobj->{"daily_views"} );
+		my $count_total = 0;
+		if ( $jsonobj->{"items"} ) {
+			my $stat = $jsonobj->{"items"}->[0];
+			$count_total = $stat->{"views"};
+		}
 		return $count_total;
 	} else {
 		return -1;
@@ -290,7 +296,11 @@ sub full_get {
 	my $url = shift;
 	my $retry = shift // 0;
 	
-	if ( $retry > 5 ) {
+	if ( $retry > 0 ) {
+		sleep( $sleep );
+	}
+	
+	if ( $retry > 10 ) {
 		die "too many retries";
 	}
 	

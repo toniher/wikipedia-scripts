@@ -1,8 +1,8 @@
 {
-	"category": "Catégorie:Bio-informatique",
-	"depth": 2,
+	"category": "Category:Bioinformatics",
+	"depth": 3,
 	"exclude": [ ],
 	"baselang": "en",
 	"targetlang": [ "ca" ],
-	"sleep": 1
+	"sleep": 3
 }
