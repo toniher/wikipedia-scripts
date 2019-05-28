@@ -177,25 +177,33 @@ sub get_pagecount {
 	my $entry = shift;
 	my $lang = shift // "en";
 	my $dates = "2019040100"; # TODO: Generate from current date
-	my $datee = "2019050100"; # TODO: Generate from current date
+	my $datee = "2019060100"; # TODO: Generate from current date
 
 	
-	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/$entry/monthly/$dates/$datee";
+	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/".uri_escape_utf8( $entry )."/monthly/$dates/$datee";
 
-	my $jsonobj = from_json(full_get($url)); 
+	my $full_get = full_get( $url );
 	
-	if ( $jsonobj ) {
-	
-		my $count_total = 0;
-		if ( $jsonobj->{"items"} ) {
-			my $stat = $jsonobj->{"items"}->[0];
-			$count_total = $stat->{"views"};
-		}
-		return $count_total;
-	} else {
+	if ( $full_get eq "-1" ) {
 		return -1;
-	}
+	} else {
 	
+		print STDERR Dumper( $full_get );
+		my $jsonobj = from_json( $full_get );
+		
+		if ( $jsonobj ) {
+		
+			my $count_total = 0;
+			if ( $jsonobj->{"items"} ) {
+				my $stat = $jsonobj->{"items"}->[0];
+				$count_total = $stat->{"views"};
+			}
+			return $count_total;
+		} else {
+			return -1;
+		}
+	
+	}
 
 }
 
@@ -207,11 +215,17 @@ sub get_interwiki {
 	
 	my $outcome = {};
 	
-	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".$entry."&languages=".$lang."&format=json";
+	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".uri_escape_utf8( $entry )."&languages=".$lang."&format=json";
 	
 	# TODO: Exception handling URL
-	my %listiw = &get_iw( from_json(full_get($wikidata_url)) );
-	my ( @listiw ) = keys %listiw;
+	my $full_get = full_get($wikidata_url );
+	my @listiw = ();
+	
+	if ( $full_get ne "-1" ) {
+		
+		my %listiw = &get_iw( from_json( $full_get ) );
+		( @listiw ) = keys %listiw;
+	}
 	
 	if ( $#listiw > 0 ) { # We assume baselang there
 
@@ -301,7 +315,7 @@ sub full_get {
 	}
 	
 	if ( $retry > 10 ) {
-		die "too many retries";
+		return "-1";
 	}
 	
 	$content = get($url);
