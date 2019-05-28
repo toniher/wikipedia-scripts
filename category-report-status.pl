@@ -188,7 +188,6 @@ sub get_pagecount {
 		return -1;
 	} else {
 	
-		print STDERR Dumper( $full_get );
 		my $jsonobj = from_json( $full_get );
 		
 		if ( $jsonobj ) {
@@ -220,10 +219,11 @@ sub get_interwiki {
 	# TODO: Exception handling URL
 	my $full_get = full_get($wikidata_url );
 	my @listiw = ();
+	my %listiw = {};
 	
 	if ( $full_get ne "-1" ) {
 		
-		my %listiw = &get_iw( from_json( $full_get ) );
+		%listiw = &get_iw( from_json( $full_get ) );
 		( @listiw ) = keys %listiw;
 	}
 	
@@ -232,7 +232,7 @@ sub get_interwiki {
 		$outcome->{"target"} = ();
 
 		my @targets = keys %{$mwcontainer->{"target"}};
-		
+
 		foreach my $targetlang ( @targets ) {
 
 			my $key = $targetlang."wiki";
@@ -241,6 +241,7 @@ sub get_interwiki {
 				
 				my $thash = {};
 				$thash->{"title"} = $listiw{ $key }->{"title"};
+
 				$thash->{"length"} = get_length( $thash->{"title"}, $mwcontainer->{"target"}->{$targetlang} );
 				
 				$outcome->{"target"}->{$targetlang} = $thash;
