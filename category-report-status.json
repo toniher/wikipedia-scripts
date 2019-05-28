@@ -4,5 +4,5 @@
 	"exclude": [ ],
 	"baselang": "en",
 	"targetlang": [ "ca" ],
-	"sleep": 3
+	"sleep": 2
 }

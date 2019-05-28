@@ -13,7 +13,9 @@ use utf8;
 use 5.010;
 binmode STDOUT, ":utf8";
 
-my $config = Config::JSON->new("category-report-status.json");
+my $inputfile = shift // "category-report-status.json" ;
+
+my $config = Config::JSON->new( $inputfile );
 
 my $category = $config->get("category") // "Category:Bioinformatics";
 my $depth = $config->get("depth") // 1; # Maximum depth of subcategories
@@ -37,7 +39,7 @@ foreach my $tlang ( @{$targetlang} ) {
 
 # Header of table
 print "{| class='wikitable sortable'\n";
-print "! Title || Length || Count/day || Interwiki || Target Present || Target Info || Category\n";
+print "! Title || Length || Count || Interwiki || Target Info || Target Length || Category\n";
 
 proceed_category( $category, $mwcontainer, 0 );
 
@@ -92,9 +94,9 @@ sub proceed_category {
 				
 				$list->{$title}->{"length"} = get_length( $title, $mw );
 
-				$list->{$title}->{"count"} = get_pagecount( $title );
+				$list->{$title}->{"count"} = get_pagecount( $title, $baselang );
 
-				my $out = get_interwiki( $title, $mwcontainer ) ;
+				my $out = get_interwiki( $title, $mwcontainer, $baselang ) ;
 				if ( $out->{"listcount"} ) {
 					$list->{$title}->{"listcount"} = $out->{"listcount"};
 				}
@@ -103,12 +105,14 @@ sub proceed_category {
 				}
 				if ( $out->{"target"} ) {
 					foreach my $key ( keys %{ $out->{"target"} } ) {
-						$list->{$title}->{"target"}.= "[[:$key:".$out->{"target"}->{$key}->{"title"}."|". $out->{"target"}->{$key}->{"title"}. "]]". " len: ". $out->{"target"}->{$key}->{"length"};
+						$list->{$title}->{"target"}.= "[[:$key:".$out->{"target"}->{$key}->{"title"}."|". $out->{"target"}->{$key}->{"title"}. "]]  || ". $out->{"target"}->{$key}->{"length"};
 					}
+				} else {
+					$list->{$title}->{"target"} = " || ";
 				}
 
 				print "|-", "\n";
-				print "| ", "[[:$baselang:$title|".$title."]]", "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"present"}, "||", $list->{$title}->{"target"}, "||", "[[:$baselang:$cat|".$cat."]]\n";
+				print "| ", "[[:$baselang:$title|".$title."]]", "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"target"}, "||", "[[:$baselang:$cat|".$cat."]]\n";
 			}
 		}
 		sleep(int($sleep));
@@ -219,7 +223,7 @@ sub get_interwiki {
 	# TODO: Exception handling URL
 	my $full_get = full_get($wikidata_url );
 	my @listiw = ();
-	my %listiw = {};
+	my %listiw;
 	
 	if ( $full_get ne "-1" ) {
 		
