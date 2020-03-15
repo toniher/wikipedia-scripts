@@ -175,6 +175,27 @@ sub get_length {
 	}
 } 
 
+sub get_url {
+	
+	my $url = shift;
+	my $retry = shift;
+	
+	my $full_get = full_get( $url );
+
+	if ( $full_get eq "-1" ) {
+		$retry++;
+		
+		if ( $retry > 5 ) {
+			return -1;
+		} else {
+			get_url( $url, $retry );
+		}
+		
+	} else {
+		return $full_get;
+	}
+}
+
 # Length of page
 sub get_pagecount {
  
@@ -186,7 +207,7 @@ sub get_pagecount {
 	
 	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/".uri_escape_utf8( $entry )."/monthly/$dates/$datee";
 
-	my $full_get = full_get( $url );
+	my $full_get = get_url( $url, 0 );
 	
 	if ( $full_get eq "-1" ) {
 		return -1;
