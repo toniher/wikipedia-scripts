@@ -7,11 +7,13 @@ use URI::Escape;
 use Data::Dumper;
 use Math::Round qw/round/;
 use Config::JSON;
+use Text::Trim;
 use utf8; 
 
 
 use 5.010;
 binmode STDOUT, ":utf8";
+binmode STDERR, ":utf8";
 
 my $inputfile = shift // "category-report-status.json" ;
 
@@ -104,9 +106,13 @@ sub proceed_category {
 				$list->{$title} = {};
 				$temp->{$title} = 1;
 				
-				$list->{$title}->{"length"} = get_length( $title, $mw );
+				my $length =  get_length( $title, $mw );
+				
+				$list->{$title}->{"length"} = $length;
 
-				$list->{$title}->{"count"} = get_pagecount( $title, $baselang );
+				my $pagecount = get_pagecount( $title, $baselang );
+				
+				$list->{$title}->{"count"} = $pagecount;
 
 				my $out = get_interwiki( $title, $mwcontainer, $baselang ) ;
 				if ( $out->{"listcount"} ) {
@@ -171,7 +177,7 @@ sub get_length {
 		titles => $entry,
 		prop => 'info',
 		redirects => '' } )
-	|| die $mw->{error}->{code} . ': ' . $mw->{error}->{details};
+	|| return -1;
 
 	if ( $articles ) {
 		if ( $articles->{"query"}->{"pages"}->{"-1"} ) {
@@ -192,15 +198,15 @@ sub get_pagecount {
  
 	my $entry = shift;
 	my $lang = shift // "en";
-	my $dates = "2019040100"; # TODO: Generate from current date
-	my $datee = "2019060100"; # TODO: Generate from current date
+	my $dates = "2020010100"; # TODO: Generate from current date
+	my $datee = "2020030100"; # TODO: Generate from current date
 
 	
 	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/".uri_escape_utf8( $entry )."/monthly/$dates/$datee";
-
-	my $full_get = full_get( $url );
-
-	if ( $full_get eq "-1" ) {
+	print STDERR $url, "\n";
+	my $full_get = trim( full_get( $url ) );
+	
+	if ( $full_get eq "-1" || $full_get eq "" ) {
 		return -1;
 	} else {
 	
