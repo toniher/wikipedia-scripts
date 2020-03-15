@@ -23,6 +23,8 @@ my $exclude = $config->get("exclude") // ("Category:Bioinformatics stubs");
 my $baselang = $config->get("baselang") // "en";
 my $targetlang = $config->get("targetlang") // ( "ca" );
 my $sleep = $config->get("sleep") // 5;
+my $user = $config->get("user") // 0;
+my $passwd = $config->get("password") // 0;
 
 my $temp = {};
 
@@ -30,10 +32,20 @@ my $temp = {};
 my $mwcontainer;
 # First base
 $mwcontainer->{"base"}->{$baselang} = MediaWiki::API->new();
+
+if ( $user && $passwd ) {
+	$mwcontainer->{"base"}->{$baselang}->login( { lgname => $user, lgpassword => $passwd } );
+}
+
 $mwcontainer->{"base"}->{$baselang}->{config}->{api_url} = 'https://'.$baselang.'.wikipedia.org/w/api.php';
 # Then targets
 foreach my $tlang ( @{$targetlang} ) {
 	$mwcontainer->{"target"}->{$tlang} = MediaWiki::API->new();
+	
+	if ( $user && $passwd ) {
+		$mwcontainer->{"target"}->{$tlang}->login( { lgname => $user, lgpassword => $passwd } );
+	}
+	
 	$mwcontainer->{"target"}->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
 }
 
@@ -187,7 +199,7 @@ sub get_pagecount {
 	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/".uri_escape_utf8( $entry )."/monthly/$dates/$datee";
 
 	my $full_get = full_get( $url );
-	
+
 	if ( $full_get eq "-1" ) {
 		return -1;
 	} else {
