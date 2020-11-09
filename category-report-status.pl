@@ -21,10 +21,12 @@ my $inputfile = shift // "category-report-status.json" ;
 
 my $config = Config::JSON->new( $inputfile );
 
+# TODO: input multiple categories
 my $category = $config->get("category") // "Category:Bioinformatics";
 my $depth = $config->get("depth") // 1; # Maximum depth of subcategories
 my $exclude = $config->get("exclude") // ("Category:Bioinformatics stubs");
 my $baselang = $config->get("baselang") // "en";
+# TODO: Multiple target languages
 my $targetlang = $config->get("targetlang") // ( "ca" );
 my $sleep = $config->get("sleep") // 5;
 my $user = $config->get("user") // 0;
@@ -54,6 +56,7 @@ foreach my $tlang ( @{$targetlang} ) {
 }
 
 # Header of table
+# TODO: Avoid printing at this stage. Keep in array depending on input
 print "{| class='wikitable sortable'\n";
 print "! Title || Length || Count || Interwiki || Target Info || Target Length || Category\n";
 
@@ -131,6 +134,7 @@ sub proceed_category {
 					$list->{$title}->{"target"} = " || ";
 				}
 
+        # TODO: Avoid printing at this stage. Keep in hash. Store by baselang title as key
 				print "|-", "\n";
 				print "| ", "[[:$baselang:$title|".$title."]]", "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"target"}, "||", "[[:$baselang:$cat|".$cat."]]\n";
 			}
