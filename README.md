@@ -11,7 +11,6 @@ Repository for handy wikipedia scripts
 	* Size
 	* Interwiki in different languages
 	* Pagecount (in a defined month)
-		* http://stats.grok.se/json/en/201501/Bioinformatics
 * Store in hash / JSON
 	* Generate MW table (which can be sorted) 
 

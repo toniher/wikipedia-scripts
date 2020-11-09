@@ -1,5 +1,5 @@
 #!/usr/bin/env perl -w
- 
+
 use MediaWiki::API;
 use LWP::Simple qw(get);
 use JSON qw(from_json);
@@ -8,10 +8,12 @@ use Data::Dumper;
 use Math::Round qw/round/;
 use Config::JSON;
 use Text::Trim;
-use utf8; 
+use DateTime;
+use utf8;
 
+use strict;
+use feature ':5.22';
 
-use 5.010;
 binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";
 
@@ -43,11 +45,11 @@ $mwcontainer->{"base"}->{$baselang}->{config}->{api_url} = 'https://'.$baselang.
 # Then targets
 foreach my $tlang ( @{$targetlang} ) {
 	$mwcontainer->{"target"}->{$tlang} = MediaWiki::API->new();
-	
+
 	if ( $user && $passwd ) {
 		$mwcontainer->{"target"}->{$tlang}->login( { lgname => $user, lgpassword => $passwd } );
 	}
-	
+
 	$mwcontainer->{"target"}->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
 }
 
@@ -65,13 +67,13 @@ sub proceed_category {
 	my $step = shift;
 
 	my $mw = $mwcontainer->{"base"}->{ $baselang };
-	
+
 	print STDERR $step, "\n";
-	
+
 	if ( $step > $depth ) {
 		return;
 	}
-	
+
 	# get a list of articles in category
 	my $articles = $mw->list ( {
 		action => 'query',
@@ -91,11 +93,11 @@ sub proceed_category {
 	# and print the article titles
 	foreach (@{$articles}) {
 		if ( $_->{ns} == 0 ) {
-		
+
 			my $title = $_->{title};
-			
+
 			unless ( $temp->{$title} ) {
-		
+
 				if ( inArray( $title, $exclude ) )  {
 					next;
 				}
@@ -105,13 +107,13 @@ sub proceed_category {
 				my $list = {};
 				$list->{$title} = {};
 				$temp->{$title} = 1;
-				
+
 				my $length =  get_length( $title, $mw );
-				
+
 				$list->{$title}->{"length"} = $length;
 
 				my $pagecount = get_pagecount( $title, $baselang );
-				
+
 				$list->{$title}->{"count"} = $pagecount;
 
 				my $out = get_interwiki( $title, $mwcontainer, $baselang ) ;
@@ -135,7 +137,7 @@ sub proceed_category {
 		}
 		sleep(int($sleep));
 	}
-	
+
 	foreach (@{$categories}) {
 
 		if ( inArray( $_->{title}, $exclude ) )  {
@@ -168,10 +170,10 @@ sub inArray {
 
 # Length of page
 sub get_length {
- 
+
 	my $entry = shift;
 	my $mw = shift;
-	
+
 	my $articles = $mw->api ( {
 		action => 'query',
 		titles => $entry,
@@ -185,35 +187,38 @@ sub get_length {
 		} else {
 			foreach my $page ( keys %{$articles->{"query"}->{"pages"} } ){
 				return $articles->{"query"}->{"pages"}->{$page}->{"length"};
-			}	
-			
+			}
+
 		}
 	} else {
 		return 0;
 	}
-} 
+}
 
 # Length of page
 sub get_pagecount {
- 
+
 	my $entry = shift;
 	my $lang = shift // "en";
-	my $dates = "2020010100"; # TODO: Generate from current date
-	my $datee = "2020030100"; # TODO: Generate from current date
 
-	
+  my $dts = (DateTime->now)->subtract( months => 3 );
+  my $dte = (DateTime->now)->subtract( months => 2 );
+
+	my $dates = $dts->ymd("")."00";
+	my $datee = $dte->ymd("")."00";
+
 	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/".uri_escape_utf8( $entry )."/monthly/$dates/$datee";
 	print STDERR $url, "\n";
 	my $full_get = trim( full_get( $url ) );
-	
+
 	if ( $full_get eq "-1" || $full_get eq "" ) {
 		return -1;
 	} else {
-	
+
 		my $jsonobj = from_json( $full_get );
-		
+
 		if ( $jsonobj ) {
-		
+
 			my $count_total = 0;
 			if ( $jsonobj->{"items"} ) {
 				my $stat = $jsonobj->{"items"}->[0];
@@ -223,32 +228,32 @@ sub get_pagecount {
 		} else {
 			return -1;
 		}
-	
+
 	}
 
 }
 
 sub get_interwiki {
-	
+
 	my $entry = shift;
 	my $mwcontainer = shift;
 	my $lang = shift // "en";
-	
+
 	my $outcome = {};
-	
+
 	my $wikidata_url = "http://www.wikidata.org/w/api.php?action=wbgetentities&sites=".$lang."wiki&titles=".uri_escape_utf8( $entry )."&languages=".$lang."&format=json";
-	
+
 	# TODO: Exception handling URL
 	my $full_get = full_get($wikidata_url );
 	my @listiw = ();
 	my %listiw;
-	
+
 	if ( $full_get ne "-1" ) {
-		
+
 		%listiw = &get_iw( from_json( $full_get ) );
 		( @listiw ) = keys %listiw;
 	}
-	
+
 	if ( $#listiw > 0 ) { # We assume baselang there
 
 		$outcome->{"target"} = ();
@@ -260,28 +265,28 @@ sub get_interwiki {
 			my $key = $targetlang."wiki";
 
 			if ( $listiw{ $key } ) {
-				
+
 				my $thash = {};
 				$thash->{"title"} = $listiw{ $key }->{"title"};
 
 				$thash->{"length"} = get_length( $thash->{"title"}, $mwcontainer->{"target"}->{$targetlang} );
-				
+
 				$outcome->{"target"}->{$targetlang} = $thash;
 			}
-			
+
 		}
-	
-		
+
+
 		# Remove wiki from lang names
 		for (@listiw) {
 			s/wiki//;
 		}
-		
+
 		$outcome->{"listcount"} = $#listiw + 1;
 		$outcome->{"list"} = join(",", sort @listiw);
 
 		$outcome->{"present"} = 0;
-		
+
 		foreach my $target ( @targets ) {
 			if ( inArray( $target, \@listiw ) ) {
 				$outcome->{"present"} = 1;
@@ -289,63 +294,62 @@ sub get_interwiki {
 		}
 
 	}
-	
+
 
 	return $outcome;
-	
+
 }
 
 
 sub avg_values {
-	
+
 	my $hash = shift;
 	my $num = 0;
 	my $sum = 0;
-	
+
 	foreach my $key ( keys %{$hash} ) {
 		my $val = $hash->{$key};
 		$sum = $sum + ( $val );
 		$num++;
 	}
-	
+
 	if ( $num > 0 ) {
 		return round( $sum / $num );
 	} else {
 		return -1;
 	}
-	
+
 }
 
 # Return interwiki list
 sub get_iw {
- 
+
 	my ( @iw ) = ();
 	my $object = shift;
 	foreach my $page ( keys %{$object->{"entities"}} ){
 		return %{$object->{"entities"}->{$page}->{"sitelinks"}};
 	}
 	return @iw;
-} 
+}
 
 
 sub full_get {
 
 	my $url = shift;
 	my $retry = shift // 0;
-	
+
 	if ( $retry > 0 ) {
 		sleep( $sleep );
 	}
-	
+
 	if ( $retry > 10 ) {
 		return "-1";
 	}
-	
+
 	$content = get($url);
 	$retry++;
 	full_get($url, $retry) unless defined $content;
-	
-	return $content;
-	
-}
 
+	return $content;
+
+}
