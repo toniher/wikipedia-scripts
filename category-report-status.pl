@@ -407,7 +407,11 @@ sub get_iw {
 	my ( @iw ) = ();
 	my $object = shift;
 	foreach my $page ( keys %{$object->{"entities"}} ){
-		return %{$object->{"entities"}->{$page}->{"sitelinks"}};
+		if ( $object->{"entities"}->{$page} ) {
+			if ( $object->{"entities"}->{$page}->{"sitelinks"} ) {
+				return %{$object->{"entities"}->{$page}->{"sitelinks"}};
+			}
+		}
 	}
 	return @iw;
 }
