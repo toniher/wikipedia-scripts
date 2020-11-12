@@ -17,20 +17,21 @@ use feature ':5.22';
 binmode STDOUT, ":utf8";
 binmode STDERR, ":utf8";
 
+my $store = {};
+
 my $inputfile = shift // "category-report-status.json" ;
 
 my $config = Config::JSON->new( $inputfile );
 
-# TODO: input multiple categories
-my $category = $config->get("category") // "Category:Bioinformatics";
+my $categorystr = $config->get("category") // "Category:Bioinformatics";
 my $depth = $config->get("depth") // 1; # Maximum depth of subcategories
 my $exclude = $config->get("exclude") // ("Category:Bioinformatics stubs");
 my $baselang = $config->get("baselang") // "en";
-# TODO: Multiple target languages
 my $targetlang = $config->get("targetlang") // ( "ca" );
 my $sleep = $config->get("sleep") // 5;
 my $user = $config->get("user") // 0;
 my $passwd = $config->get("password") // 0;
+my $method = $config->get("method") // "wikitext";
 
 my $temp = {};
 
@@ -55,13 +56,75 @@ foreach my $tlang ( @{$targetlang} ) {
 	$mwcontainer->{"target"}->{$tlang}->{config}->{api_url} = 'https://'.$tlang.'.wikipedia.org/w/api.php';
 }
 
-# Header of table
-# TODO: Avoid printing at this stage. Keep in array depending on input
-print "{| class='wikitable sortable'\n";
-print "! Title || Length || Count || Interwiki || Target Info || Target Length || Category\n";
+my ( @header ) = ( "Article", "Caràcters", "Visites", "Interwikis", "Categoria" );
+my ( @headerlang ) = ( "Article", "Caràcters" );
 
-proceed_category( $category, $mwcontainer, 0 );
+my ( @categories ) = split( /,/, $categorystr );
 
+foreach my $category ( @categories ) {
+
+	proceed_category( $category, $mwcontainer, 0 );
+
+}
+
+if ( $method eq 'wikitext' ) {
+
+	print "{| class='wikitable sortable'\n";
+
+	my $headstr = "! ". join( " !! ", @header );
+
+	foreach my $tlang ( sort( @{$targetlang} ) ) {
+		my ( @arr ) = ();
+		foreach my $p ( @headerlang ) {
+			push( @arr, "$p ($tlang)" );
+		}
+		$headstr .= " !! ".join( " !! ", @arr );
+	}
+
+	$headstr .= "\n";
+
+	print $headstr;
+
+
+	foreach my $title ( keys %{$store} ) {
+
+		my @row;
+
+		push( @row, "[[".$baselang.":".$title."|".$title."]]" );
+		push( @row, $store->{$title}->{"length"} );
+		push( @row, $store->{$title}->{"count"} );
+		push( @row, $store->{$title}->{"listcount"} );
+		push( @row, "[[".$baselang.":".$store->{$title}->{"category"}."|".$store->{$title}->{"category"}."]]" );
+
+		foreach my $tlang ( sort( @{$targetlang} ) ) {
+
+			if ( $store->{$title}->{"target"}->{$tlang} ) {
+
+				push( @row, "[[".$tlang.":".$store->{$title}->{"target"}->{$tlang}->{"title"}."|".$store->{$title}->{"target"}->{$tlang}->{"title"}."]]" );
+				push( @row, $store->{$title}->{"target"}->{$tlang}->{"length"} );
+
+			} else {
+				push( @row, ( "" , "" ) )
+			}
+
+
+		}
+
+		print "|-\n|\n";
+		print join( " || ", @row )."\n";
+
+	}
+
+
+
+	#End of table
+	print "|}\n";
+
+}
+
+# TODO: Avoid printing at this stage. Keep in hash. Store by baselang title as key
+#print "|-", "\n";
+#print "| ", "[[:$baselang:$title|".$title."]]", "||", $store->{$title}->{"length"}, "||", $store->{$title}->{"count"}, "||", $store->{$title}->{"listcount"}, "||", $store->{$title}->{"target"}, "||", "[[:$baselang:$cat|".$cat."]]\n";
 
 sub proceed_category {
 
@@ -94,12 +157,19 @@ sub proceed_category {
 	|| die $mw->{error}->{code} . ': ' . $mw->{error}->{details};
 
 	# and print the article titles
+
+	my $iter = 0;
 	foreach (@{$articles}) {
 		if ( $_->{ns} == 0 ) {
 
+			$iter++;
+			if ( $iter > 4 ) {
+				#last; Uncomment for testing purposes
+			}
+
 			my $title = $_->{title};
 
-			unless ( $temp->{$title} ) {
+			unless ( $store->{$title} ) {
 
 				if ( inArray( $title, $exclude ) )  {
 					next;
@@ -107,38 +177,45 @@ sub proceed_category {
 
 				print STDERR "** ", $title, "\n";
 
-				my $list = {};
-				$list->{$title} = {};
-				$temp->{$title} = 1;
+				$store->{$title} = {};
+				$store->{$title}->{"target"} = {};
 
 				my $length =  get_length( $title, $mw );
 
-				$list->{$title}->{"length"} = $length;
+				$store->{$title}->{"length"} = $length;
 
 				my $pagecount = get_pagecount( $title, $baselang );
 
-				$list->{$title}->{"count"} = $pagecount;
+				$store->{$title}->{"count"} = $pagecount;
+
+				$store->{$title}->{"category"} = $cat;
 
 				my $out = get_interwiki( $title, $mwcontainer, $baselang ) ;
 				if ( $out->{"listcount"} ) {
-					$list->{$title}->{"listcount"} = $out->{"listcount"};
-				}
-				if ( $out->{"present"} ) {
-					$list->{$title}->{"present"} = $out->{"present"};
-				}
-				if ( $out->{"target"} ) {
-					foreach my $key ( keys %{ $out->{"target"} } ) {
-						$list->{$title}->{"target"}.= "[[:$key:".$out->{"target"}->{$key}->{"title"}."|". $out->{"target"}->{$key}->{"title"}. "]]  || ". $out->{"target"}->{$key}->{"length"};
-					}
+					$store->{$title}->{"listcount"} = $out->{"listcount"};
 				} else {
-					$list->{$title}->{"target"} = " || ";
+					$store->{$title}->{"listcount"} = 0;
 				}
 
-        # TODO: Avoid printing at this stage. Keep in hash. Store by baselang title as key
-				print "|-", "\n";
-				print "| ", "[[:$baselang:$title|".$title."]]", "||", $list->{$title}->{"length"}, "||", $list->{$title}->{"count"}, "||", $list->{$title}->{"listcount"}, "||", $list->{$title}->{"target"}, "||", "[[:$baselang:$cat|".$cat."]]\n";
+				if ( $out->{"present"} ) {
+					$store->{$title}->{"present"} = $out->{"present"};
+				}
+
+				if ( $out->{"target"} ) {
+					foreach my $key ( keys %{ $out->{"target"} } ) {
+						$store->{$title}->{"target"}->{$key} = {};
+						if ( $out->{"target"}->{$key}->{"title"} ) {
+							$store->{$title}->{"target"}->{$key}->{"title"} = $out->{"target"}->{$key}->{"title"};
+						}
+						if ( $out->{"target"}->{$key}->{"length"} ) {
+							$store->{$title}->{"target"}->{$key}->{"length"} = $out->{"target"}->{$key}->{"length"};
+						}
+					}
+				}
+
 			}
 		}
+
 		sleep(int($sleep));
 	}
 
@@ -153,9 +230,6 @@ sub proceed_category {
 		sleep(int($sleep));
 	}
 }
-
-#End of table
-print "|}\n";
 
 sub inArray {
 
@@ -205,11 +279,13 @@ sub get_pagecount {
 	my $entry = shift;
 	my $lang = shift // "en";
 
-  my $dts = (DateTime->now)->subtract( months => 3 );
-  my $dte = (DateTime->now)->subtract( months => 2 );
+  my $dts = (DateTime->now)->subtract( months => 6 );
+  my $dte = (DateTime->now)->subtract( months => 5 );
 
-	my $dates = $dts->ymd("")."00";
-	my $datee = $dte->ymd("")."00";
+
+
+	my $dates = substr( $dts->ymd(""), 0, -2 )."0100";
+	my $datee = substr( $dte->ymd(""), 0, -2 )."0100";
 
 	my $url = "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/$lang.wikipedia/all-access/user/".uri_escape_utf8( $entry )."/monthly/$dates/$datee";
 	print STDERR $url, "\n";
@@ -350,7 +426,7 @@ sub full_get {
 		return "-1";
 	}
 
-	$content = get($url);
+	my $content = get($url);
 	$retry++;
 	full_get($url, $retry) unless defined $content;
 
