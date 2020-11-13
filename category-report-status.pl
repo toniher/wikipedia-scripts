@@ -94,13 +94,13 @@ if ( $method eq 'wikitext' ) {
 		push( @row, $store->{$title}->{"length"} );
 		push( @row, $store->{$title}->{"count"} );
 		push( @row, $store->{$title}->{"listcount"} );
-		push( @row, "[[".$baselang.":".$store->{$title}->{"category"}."|".$store->{$title}->{"category"}."]]" );
+		push( @row, "[[:".$baselang.":".$store->{$title}->{"category"}."|".$store->{$title}->{"category"}."]]" );
 
 		foreach my $tlang ( sort( @{$targetlang} ) ) {
 
 			if ( $store->{$title}->{"target"}->{$tlang} ) {
 
-				push( @row, "[[".$tlang.":".$store->{$title}->{"target"}->{$tlang}->{"title"}."|".$store->{$title}->{"target"}->{$tlang}->{"title"}."]]" );
+				push( @row, "[[:".$tlang.":".$store->{$title}->{"target"}->{$tlang}->{"title"}."|".$store->{$title}->{"target"}->{$tlang}->{"title"}."]]" );
 				push( @row, $store->{$title}->{"target"}->{$tlang}->{"length"} );
 
 			} else {
@@ -110,7 +110,7 @@ if ( $method eq 'wikitext' ) {
 
 		}
 
-		print "|-\n|\n";
+		print "|-\n|";
 		print join( " || ", @row )."\n";
 
 	}
